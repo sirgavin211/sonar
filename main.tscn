@@ -1,0 +1,60 @@
+[gd_scene format=3 uid="uid://bd85jdrkm6gvr"]
+
+[ext_resource type="PackedScene" uid="uid://b4locmxaumksb" path="res://player.tscn" id="1_ig7tw"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ntckf"]
+size = Vector2(153, 8)
+
+[node name="Main" type="Node2D" unique_id=645924972]
+position = Vector2(253, 203)
+scale = Vector2(0.98388714, 1.0363221)
+
+[node name="Player" parent="." unique_id=1453754596 instance=ExtResource("1_ig7tw")]
+position = Vector2(97.57217, -82.98579)
+
+[node name="Floor" type="StaticBody2D" parent="." unique_id=422899475]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor" unique_id=1070428055]
+position = Vector2(66.5, -6)
+shape = SubResource("RectangleShape2D_ntckf")
+
+[node name="ColorRect" type="ColorRect" parent="Floor" unique_id=1754362847]
+offset_left = -10.0
+offset_top = -9.999999
+offset_right = 30.0
+offset_bottom = 30.0
+scale = Vector2(3.8207245, 0.19135562)
+metadata/_edit_use_anchors_ = true
+
+[node name="Floor2" type="StaticBody2D" parent="." unique_id=75631284]
+position = Vector2(166.68579, -29.913479)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor2" unique_id=997298389]
+position = Vector2(66.5, -6)
+shape = SubResource("RectangleShape2D_ntckf")
+
+[node name="ColorRect" type="ColorRect" parent="Floor2" unique_id=844363836]
+offset_left = -10.0
+offset_top = -9.999999
+offset_right = 30.0
+offset_bottom = 30.0
+scale = Vector2(3.8207245, 0.19135562)
+metadata/_edit_use_anchors_ = true
+
+[node name="Floor3" type="StaticBody2D" parent="." unique_id=1157643960]
+position = Vector2(-121.96521, -30.878431)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor3" unique_id=814641358]
+position = Vector2(66.5, -6)
+shape = SubResource("RectangleShape2D_ntckf")
+
+[node name="ColorRect" type="ColorRect" parent="Floor3" unique_id=288778508]
+offset_left = -10.0
+offset_top = -9.999999
+offset_right = 30.0
+offset_bottom = 30.0
+scale = Vector2(3.8207245, 0.19135562)
+metadata/_edit_use_anchors_ = true
