@@ -1,7 +1,7 @@
 extends SceneTree
 # Run: Godot --headless --path . --script tests/test_inventory.gd
 
-const InventoryScript := preload("res://inventory.gd")
+const InventoryScript := preload("res://scripts/systems/inventory.gd")
 
 
 func _init() -> void:
