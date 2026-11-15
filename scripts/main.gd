@@ -58,7 +58,7 @@ const BossScene := preload("res://scenes/characters/boss.tscn")
 	preload("res://assets/textures/nature/16x16/rock-small-16.png"),
 ]
 @export var nature_scale := 2.0  # art pixels -> world; 2x everywhere keeps one pixel grid
-@export var stone_surface: Texture2D = preload("res://graphics/01-bare-rock.png")  # tiled over stone blocks + mountains
+@export var stone_surface: Texture2D = preload("res://assets/textures/terrain/01-bare-rock.png")  # tiled over stone blocks + mountains
 @export var rock_tint := Color(1.7, 1.6, 1.5)  # lighter than the stone ground so blocks read as walls
 @export var mountain_tint := Color(1.3, 1.25, 1.2)
 @export var rock_color := Color(0.4, 0.38, 0.35)  # minimap color
@@ -91,7 +91,7 @@ const BossScene := preload("res://scenes/characters/boss.tscn")
 ]
 
 @export_group("Start rolls")
-# When each click happens in sound/SpinClick.mp3 (seconds). Every click flips to a
+# When each click happens in assets/audio/sfx/SpinClick.mp3 (seconds). Every click flips to a
 # new name; the last click lands on the result. Found with ffmpeg silencedetect.
 @export var spin_clicks: Array[float] = [
 	0.047, 0.128, 0.207, 0.297, 0.389, 0.474, 0.561, 0.642, 0.72, 0.81, 0.904,

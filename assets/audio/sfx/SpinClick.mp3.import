@@ -3,12 +3,12 @@
 importer="mp3"
 type="AudioStreamMP3"
 uid="uid://qgrk3454e6b6"
-path="res://.godot/imported/SpinClick.mp3-6c731b4b45cf6c9627eedf6cd8f64c94.mp3str"
+path="res://.godot/imported/SpinClick.mp3-771104929825907425f6a19269b27d51.mp3str"
 
 [deps]
 
-source_file="res://sound/SpinClick.mp3"
-dest_files=["res://.godot/imported/SpinClick.mp3-6c731b4b45cf6c9627eedf6cd8f64c94.mp3str"]
+source_file="res://assets/audio/sfx/SpinClick.mp3"
+dest_files=["res://.godot/imported/SpinClick.mp3-771104929825907425f6a19269b27d51.mp3str"]
 
 [params]
 
