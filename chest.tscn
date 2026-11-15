@@ -1,0 +1,29 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://chest.gd" id="1"]
+[ext_resource type="Script" path="res://echo_glow.gd" id="2"]
+[ext_resource type="Texture2D" path="res://light_texture.tres" id="3"]
+[ext_resource type="Script" path="res://flat_shape.gd" id="4"]
+
+[sub_resource type="RectangleShape2D" id="shape"]
+size = Vector2(44, 30)
+
+[node name="Chest" type="StaticBody2D" groups=["interactable"]]
+collision_mask = 0
+script = ExtResource("1")
+
+[node name="Body" type="Node2D" parent="."]
+script = ExtResource("4")
+size = Vector2(44, 30)
+color = Color(0.6, 0.4, 0.2, 1)
+corner_radius = 4.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="EchoGlow" type="PointLight2D" parent="."]
+color = Color(0.6, 0.9, 1, 1)
+energy = 1.5
+texture = ExtResource("3")
+texture_scale = 0.469
+script = ExtResource("2")
