@@ -3,8 +3,8 @@ extends Node2D
 # The "bounce back": an arc as wide as the object it came off of,
 # shrinking back toward the player like a reflected sound wave.
 
-const SPEED := 600.0
-const MIN_SPAN := 0.05  # radians, so tiny objects still show
+@export var speed := 600.0
+@export var min_span := 0.05  # radians, so tiny objects still show
 
 var listener: Player
 var direction := 0.0  # angle from player to the object
@@ -20,19 +20,13 @@ func setup(player: Player, from: Vector2, object_size: float, echo_color: Color)
 	direction = offset.angle()
 	radius = offset.length()
 	# Arc length = object size, so a big rock sends back a wide echo.
-	span = clampf(object_size / maxf(radius, 1.0), MIN_SPAN, PI)
+	span = clampf(object_size / maxf(radius, 1.0), min_span, PI)
 	color = echo_color
 
 
-func _ready() -> void:
-	var unshaded := CanvasItemMaterial.new()
-	unshaded.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
-	material = unshaded
-
-
 func _physics_process(delta: float) -> void:
-	radius -= SPEED * delta
-	if radius <= Player.SIZE.x / 2:
+	radius -= speed * delta
+	if radius <= listener.size.x / 2:
 		queue_free()
 		return
 	global_position = listener.global_position

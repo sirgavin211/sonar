@@ -1,16 +1,14 @@
 class_name Listener
 extends CharacterBody2D
 # Hunts by sound: chases when close, or when the player fires sonar within earshot.
-# Main sets the stats below before adding it (stage scaling, boss).
+# Main overrides the stats per stage; boss.tscn is this scene with bigger numbers.
 
 signal died(listener: Listener)
 
-var size := Vector2(26, 26)
-var color := Color(0.6, 0.1, 0.8)
-var max_health := 2
-var speed := 110.0
-var contact_damage := 12.0  # per second while touching
-var sight_radius := 250.0
+@export var max_health := 2
+@export var speed := 110.0
+@export var contact_damage := 12.0  # per second while touching
+@export var sight_radius := 250.0
 
 var health := 2
 var target: Player
@@ -18,15 +16,13 @@ var chasing := false
 var wander_dir := Vector2.ZERO
 var wander_time := 0.0
 
+@onready var size: Vector2 = $CollisionShape2D.shape.size
+@onready var health_bar: WorldBar = $HealthBar
+
 
 func _ready() -> void:
 	health = max_health
-	collision_layer = 4
-	collision_mask = 1  # walls only, so they can swarm onto the player
-	add_to_group("listeners")
-	Placeholder.box(self, size, color)
-	Placeholder.collider(self, size)
-	EchoGlow.attach(self, size.x * 3, Color(1.0, 0.3, 0.6))
+	health_bar.ratio = 1.0
 
 
 func _physics_process(delta: float) -> void:
@@ -38,7 +34,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		wander(delta)
 	move_and_slide()
-	if to_player.length() < (size.x + Player.SIZE.x) / 2 + 6:
+	if to_player.length() < (size.x + target.size.x) / 2 + 6:
 		target.take_damage(contact_damage * delta)
 
 
@@ -57,6 +53,7 @@ func hear(at: Vector2, radius: float) -> void:
 
 func take_hit(damage: int) -> void:
 	health -= damage
+	health_bar.ratio = float(health) / max_health
 	chasing = true
 	if health <= 0:
 		died.emit(self)

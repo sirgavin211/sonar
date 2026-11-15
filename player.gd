@@ -5,44 +5,41 @@ signal died
 signal shot_fired(at: Vector2)
 signal item_picked(kind: String)
 
-const SIZE := Vector2(28, 28)
-const MAX_HEALTH := 100.0
-const FOOD_HEAL := 30.0
-const MAX_STAMINA := 100.0
-const SPRINT_MULTIPLIER := 1.7
-const STAMINA_DRAIN := 35.0  # per second while sprinting
-const STAMINA_REGEN := 20.0
-const STAMINA_RECOVER_AT := 30.0  # running dry locks sprint until this much is back
+const WaveScene := preload("res://sonar_wave.tscn")
+
+@export var max_health := 100.0
+@export var food_heal := 30.0
+@export_group("Stamina")
+@export var max_stamina := 100.0
+@export var sprint_boost := 1.7  # speed multiplier while sprinting
+@export var stamina_drain := 35.0  # per second while sprinting
+@export var stamina_regen := 20.0
+@export var stamina_recover_at := 30.0  # running dry locks sprint until this much is back
 
 # Stats the start-of-game ability roll can change.
-var speed := 220.0
-var fire_cooldown := 0.6
-var wave_range := 700.0
-var wave_damage := 1
-var aggro_radius := 600.0  # how far Listeners hear the sonar gun
+@export_group("Rollable stats")
+@export var speed := 220.0
+@export var fire_cooldown := 0.6
+@export var wave_range := 700.0
+@export var wave_damage := 1
+@export var aggro_radius := 600.0  # how far Listeners hear the sonar gun
 
-var health := MAX_HEALTH
-var stamina := MAX_STAMINA
+var health := 0.0
+var stamina := 0.0
 var exhausted := false
 var backpack := Inventory.new(15)  # 3 rows x 5
 var frozen := true  # main unfreezes after the start rolls
 var is_dead := false
 var cooldown_left := 0.0
-var gun: Node2D
+
+@onready var gun: Node2D = $Gun
+@onready var health_bar: WorldBar = $HealthBar
+@onready var size: Vector2 = $CollisionShape2D.shape.size
 
 
 func _ready() -> void:
-	collision_layer = 2
-	collision_mask = 1
-	Placeholder.box(self, SIZE, Color(0.9, 0.9, 1.0))
-	Placeholder.collider(self, SIZE)
-	gun = Node2D.new()
-	add_child(gun)
-	var barrel := Placeholder.box(gun, Vector2(24, 8), Color(0.5, 0.6, 0.7))
-	barrel.position.x += 18
-	# Just enough light to see yourself in the dark.
-	Placeholder.light(self, 80, Color.WHITE, 0.7)
-	add_child(Camera2D.new())
+	health = max_health
+	stamina = max_stamina
 
 
 func _physics_process(delta: float) -> void:
@@ -61,11 +58,11 @@ func _physics_process(delta: float) -> void:
 func sprint_multiplier(direction: Vector2, delta: float) -> float:
 	var sprinting := Input.is_action_pressed("sprint") and direction != Vector2.ZERO and not exhausted
 	if sprinting:
-		stamina = maxf(stamina - STAMINA_DRAIN * delta, 0.0)
+		stamina = maxf(stamina - stamina_drain * delta, 0.0)
 		exhausted = stamina == 0.0
-		return SPRINT_MULTIPLIER
-	stamina = minf(stamina + STAMINA_REGEN * delta, MAX_STAMINA)
-	if exhausted and stamina >= STAMINA_RECOVER_AT:
+		return sprint_boost
+	stamina = minf(stamina + stamina_regen * delta, max_stamina)
+	if exhausted and stamina >= stamina_recover_at:
 		exhausted = false
 	return 1.0
 
@@ -75,7 +72,7 @@ func aim_direction() -> Vector2:
 
 
 func shoot() -> void:
-	var wave := SonarWave.new()
+	var wave: SonarWave = WaveScene.instantiate()
 	wave.setup(self, aim_direction())
 	get_parent().add_child(wave)
 	cooldown_left = fire_cooldown
@@ -90,14 +87,16 @@ func pick_up(kind: String) -> bool:
 
 
 func eat() -> void:
-	if health < MAX_HEALTH and backpack.remove("food"):
-		health = minf(health + FOOD_HEAL, MAX_HEALTH)
+	if health < max_health and backpack.remove("food"):
+		health = minf(health + food_heal, max_health)
+		health_bar.ratio = health / max_health
 
 
 func take_damage(amount: float) -> void:
 	if is_dead:
 		return
 	health -= amount
+	health_bar.ratio = maxf(health, 0.0) / max_health
 	if health <= 0.0:
 		health = 0.0
 		is_dead = true

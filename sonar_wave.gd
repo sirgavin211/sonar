@@ -5,13 +5,15 @@ extends Node2D
 # part of the front hits a corner it splits into smaller pieces. Anything a ray
 # reaches echoes, sends an EchoReturn back to the player, and Listeners take a hit once.
 
-const SPEED := 600.0
-const ARC := PI / 4  # cone width; set to TAU for a full 360 ring
-const RAY_COUNT := 40
-const BOUNCE_DIM := 0.6  # each bounce makes that piece of the wave dimmer
-const RINGS := 3  # trailing ripples behind the front
-const RING_GAP := 14.0
-const COLOR := Color(0.5, 0.9, 1.0)
+const EchoScene := preload("res://echo_return.tscn")
+
+@export var speed := 600.0
+@export_range(1, 360, 1, "radians_as_degrees") var arc := PI / 4  # cone width; 360 for a full ring
+@export var ray_count := 40
+@export var bounce_dim := 0.6  # each bounce makes that piece of the wave dimmer
+@export var rings := 3  # trailing ripples behind the front
+@export var ring_gap := 14.0
+@export var color := Color(0.5, 0.9, 1.0)
 
 var shooter: Player
 var direction := 0.0
@@ -28,20 +30,13 @@ func setup(player: Player, aim: Vector2) -> void:
 	direction = aim.angle()
 	max_range = player.wave_range
 	damage = player.wave_damage
-	for i in RAY_COUNT:
-		var angle := direction - ARC / 2 + ARC * i / (RAY_COUNT - 1)
+	for i in ray_count:
+		var angle := direction - arc / 2 + arc * i / (ray_count - 1)
 		rays.append({"pos": position, "dir": Vector2.from_angle(angle), "bounces": 0})
 
 
-func _ready() -> void:
-	# Draw at full brightness; the darkness shouldn't hide the wave itself.
-	var unshaded := CanvasItemMaterial.new()
-	unshaded.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
-	material = unshaded
-
-
 func _physics_process(delta: float) -> void:
-	var step := SPEED * delta
+	var step := speed * delta
 	traveled += step
 	if traveled > max_range:
 		queue_free()
@@ -89,33 +84,34 @@ func reach(node: Node) -> void:
 
 # shortcut: echo returns in a straight line, not along the bounced path; trace back the ray's path if it looks wrong in play
 func send_echo(node: Node2D) -> void:
-	var echo := EchoReturn.new()
+	var echo: EchoReturn = EchoScene.instantiate()
 	var glow: PointLight2D = node.get_node("EchoGlow")
 	echo.setup(shooter, node.global_position, object_size(node), glow.color)
 	get_parent().add_child(echo)
 
 
-# Placeholder rect size; switch to the sprite's size once art lands.
+# Size of the node's collision shape, so it stays right when art replaces the shapes.
 func object_size(node: Node2D) -> float:
-	for child in node.get_children():
-		if child is ColorRect:
-			return maxf(child.size.x, child.size.y)
-	return 20.0
+	var collision: CollisionShape2D = node.get_node_or_null("CollisionShape2D")
+	if collision == null:
+		return 20.0
+	var rect := collision.shape.get_rect()
+	return maxf(rect.size.x, rect.size.y)
 
 
 func _draw() -> void:
 	var fade := 1.0 - traveled / max_range
 	# Neighbours further apart than this have split (one hit a corner, one didn't).
-	var max_gap := traveled * ARC / (RAY_COUNT - 1) * 2.5 + 4.0
-	for i in RAY_COUNT - 1:
+	var max_gap := traveled * arc / (ray_count - 1) * 2.5 + 4.0
+	for i in ray_count - 1:
 		var a: Dictionary = rays[i]
 		var b: Dictionary = rays[i + 1]
 		if a.bounces != b.bounces or a.pos.distance_to(b.pos) > max_gap:
 			continue
-		for ring in RINGS:
-			var back := ring * RING_GAP
+		for ring in rings:
+			var back := ring * ring_gap
 			if back >= traveled:
 				break
-			var color := COLOR
-			color.a = fade * pow(BOUNCE_DIM, a.bounces) / (ring + 1)
-			draw_line(to_local(a.pos - a.dir * back), to_local(b.pos - b.dir * back), color, 3.0)
+			var ring_color := color
+			ring_color.a = fade * pow(bounce_dim, a.bounces) / (ring + 1)
+			draw_line(to_local(a.pos - a.dir * back), to_local(b.pos - b.dir * back), ring_color, 3.0)

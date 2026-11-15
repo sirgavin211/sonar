@@ -1,38 +1,53 @@
 extends Node2D
 # Game manager: start rolls, map, stages, spawns, boss timer, win/lose.
+# Every balance number below shows up in the Inspector when you select Main in main.tscn.
 
-# --- Balance (tweak here) ---
-const MAP_SIZE := Vector2(4000, 4000)
-const TILE := 100.0  # mountain block size
-const ROCK_COUNT := 70
-const FOOD_COUNT := 25
-const FUEL_COUNT := 40
-const SCATTERED_SHARDS := 5  # the 6th comes from the boss
-const SHARDS_TO_WIN := 6
-const CAMP_CLEAR_RADIUS := 500.0
-const FUEL_MAX := 100.0
-const START_FUEL := 60.0
-const FUEL_PER_ITEM := 10.0
-const FUEL_DRAIN := 0.4  # per second
-const BOSS_DELAY := 60.0
-const START_LISTENERS := 8
-const INTERACT_RANGE := 80.0
-const DARKNESS := Color(0.03, 0.03, 0.05)
+const PlayerScene := preload("res://player.tscn")
+const CampScene := preload("res://camp.tscn")
+const HudScene := preload("res://hud.tscn")
+const WallScene := preload("res://wall.tscn")
+const PickupScene := preload("res://pickup.tscn")
+const ListenerScene := preload("res://listener.tscn")
+const BossScene := preload("res://boss.tscn")
 
+@export_group("Map")
+@export var map_size := Vector2(4000, 4000)
+@export var tile := 100.0  # mountain block size
+@export var rock_count := 70
+@export var rock_min_size := 40.0
+@export var rock_max_size := 120.0
+@export var food_count := 25
+@export var fuel_count := 40
+@export var scattered_shards := 5  # the last one comes from the boss
+@export var camp_clear_radius := 500.0
+@export var ground_color := Color(0.33, 0.4, 0.28)
+@export var grid_color := Color(0.29, 0.35, 0.24)
+@export var rock_color := Color(0.4, 0.38, 0.35)
+@export var mountain_color := Color(0.35, 0.3, 0.3)
+@export var darkness_color := Color(0.03, 0.03, 0.05)
+
+@export_group("Sun")
+@export var shards_to_win := 6
+@export var fuel_max := 100.0
+@export var start_fuel := 60.0
+@export var fuel_per_item := 10.0
+@export var fuel_drain := 0.4  # per second
+@export var interact_range := 80.0
+
+@export_group("Enemies")
+@export var start_listeners := 8
+@export var boss_delay := 60.0
 # Index = stage - 1. Stage 3 is meant to be a near-guaranteed loss.
-const SPAWN_PER_SHARD := [3, 6, 20]
-const STAGE_STATS := [
+@export var spawn_per_shard: Array[int] = [3, 6, 20]
+@export var stage_stats: Array[Dictionary] = [
 	{"speed": 110.0, "max_health": 2, "contact_damage": 12.0},
 	{"speed": 150.0, "max_health": 3, "contact_damage": 18.0},
 	{"speed": 215.0, "max_health": 5, "contact_damage": 35.0},
 ]
-const BOSS_STATS := {
-	"size": Vector2(80, 80), "color": Color(0.9, 0.1, 0.1), "max_health": 40,
-	"speed": 160.0, "contact_damage": 40.0, "sight_radius": 100000.0,
-}
 
-# Changes are added to player stats. Weights don't need to sum to 100.
-const ABILITIES := [
+@export_group("Start rolls")
+# Mods are added to player stats. Weights don't need to sum to 100.
+@export var abilities: Array[Dictionary] = [
 	{"name": "Nothing. Unlucky.", "weight": 60, "tier": "none", "mods": {}},
 	{"name": "Heavy Boots (slower)", "weight": 9, "tier": "bad", "mods": {"speed": -60.0}},
 	{"name": "Loud Mouth (Listeners hear you from far)", "weight": 8, "tier": "bad", "mods": {"aggro_radius": 700.0}},
@@ -44,19 +59,14 @@ const ABILITIES := [
 		"mods": {"speed": 120.0, "wave_range": 800.0, "fire_cooldown": -0.4, "wave_damage": 2}},
 ]
 # seconds 0 = unlimited.
-const PLAYTIMES := [
+@export var playtimes: Array[Dictionary] = [
 	{"name": "3 minutes", "weight": 40, "tier": "bad", "seconds": 180},
 	{"name": "5 minutes", "weight": 30, "tier": "none", "seconds": 300},
 	{"name": "8 minutes", "weight": 18, "tier": "good", "seconds": 480},
 	{"name": "15 minutes", "weight": 9, "tier": "good", "seconds": 900},
 	{"name": "UNLIMITED", "weight": 3, "tier": "jackpot", "seconds": 0},
 ]
-const TIER_FLAVOR := {"none": "meh.", "bad": "oof.", "good": "LET'S GO", "jackpot": "!!! JACKPOT !!!"}
-
-const KEY_ACTIONS := {
-	"move_up": KEY_W, "move_down": KEY_S, "move_left": KEY_A, "move_right": KEY_D,
-	"backpack": KEY_TAB, "interact": KEY_E, "eat": KEY_F, "confirm": KEY_SPACE, "restart": KEY_R, "sprint": KEY_SHIFT,
-}
+@export var tier_flavor := {"none": "meh.", "bad": "oof.", "good": "LET'S GO", "jackpot": "!!! JACKPOT !!!"}
 
 var player: Player
 var camp: Camp
@@ -69,7 +79,7 @@ var game_over := false
 var ability: Dictionary
 var playtime: Dictionary
 var time_left := 0.0
-var sun_fuel := START_FUEL
+var sun_fuel := 0.0
 var shards_found := 0
 var shards_deposited := 0
 var stage := 1
@@ -77,84 +87,86 @@ var boss_timer := -1.0  # < 0 means not counting
 
 
 func _ready() -> void:
-	setup_input()
+	sun_fuel = start_fuel
 	darkness = CanvasModulate.new()
-	darkness.color = DARKNESS
+	darkness.color = darkness_color
 	add_child(darkness)
 	build_map()
 
-	camp = Camp.new()
-	camp.position = MAP_SIZE / 2
+	camp = CampScene.instantiate()
+	camp.position = map_size / 2
 	add_child(camp)
 
-	player = Player.new()
+	player = PlayerScene.instantiate()
 	player.position = camp.position + Vector2(0, 90)
 	add_child(player)
 	player.died.connect(func(): lose("The Listeners got you."))
 	player.shot_fired.connect(_on_shot_fired)
 	player.item_picked.connect(_on_item_picked)
 
-	hud = Hud.new()
+	hud = HudScene.instantiate()
 	hud.game = self
 	add_child(hud)
 
-	spawn_listeners(START_LISTENERS)
+	spawn_listeners(start_listeners)
 	await run_start_rolls()
 	start()
-
-
-func setup_input() -> void:
-	for action in KEY_ACTIONS:
-		if InputMap.has_action(action):
-			continue
-		InputMap.add_action(action)
-		var key := InputEventKey.new()
-		key.physical_keycode = KEY_ACTIONS[action]
-		InputMap.action_add_event(action, key)
-	if not InputMap.has_action("shoot"):
-		InputMap.add_action("shoot")
-		var click := InputEventMouseButton.new()
-		click.button_index = MOUSE_BUTTON_LEFT
-		InputMap.action_add_event("shoot", click)
 
 
 # --- Map ---
 
 func build_map() -> void:
-	var ground := Placeholder.box(self, MAP_SIZE, Color(0.25, 0.22, 0.2))
-	ground.position = Vector2.ZERO
+	var ground := Ground.new()
+	ground.size = map_size
+	ground.color = ground_color
+	ground.line_color = grid_color
 	ground.z_index = -2
+	add_child(ground)
 	build_mountains()
-	for i in ROCK_COUNT:
-		var size := Vector2(randf_range(40, 120), randf_range(40, 120))
+	for i in rock_count:
+		var size := Vector2(randf_range(rock_min_size, rock_max_size), randf_range(rock_min_size, rock_max_size))
 		var pos := random_open_point()
-		Placeholder.wall(self, pos, size, Color(0.4, 0.38, 0.35))
+		spawn_wall(pos, size, rock_color)
 		rock_rects.append(Rect2(pos - size / 2, size))
-	for i in FOOD_COUNT:
-		Pickup.spawn(self, "food", random_open_point())
-	for i in FUEL_COUNT:
-		Pickup.spawn(self, "fuel", random_open_point())
-	for i in SCATTERED_SHARDS:
-		Pickup.spawn(self, "shard", random_open_point())
+	for i in food_count:
+		spawn_pickup("food", random_open_point())
+	for i in fuel_count:
+		spawn_pickup("fuel", random_open_point())
+	for i in scattered_shards:
+		spawn_pickup("shard", random_open_point())
 
 
 # Ring of blocks on every edge keeps the player in.
 func build_mountains() -> void:
-	var tiles := int(MAP_SIZE.x / TILE)
-	var mountain := Color(0.35, 0.3, 0.3)
+	var tiles := int(map_size.x / tile)
 	for i in tiles:
-		var along := (i + 0.5) * TILE
-		for pos in [Vector2(along, TILE / 2), Vector2(along, MAP_SIZE.y - TILE / 2),
-				Vector2(TILE / 2, along), Vector2(MAP_SIZE.x - TILE / 2, along)]:
-			Placeholder.wall(self, pos, Vector2(TILE, TILE), mountain)
+		var along := (i + 0.5) * tile
+		for pos in [Vector2(along, tile / 2), Vector2(along, map_size.y - tile / 2),
+				Vector2(tile / 2, along), Vector2(map_size.x - tile / 2, along)]:
+			spawn_wall(pos, Vector2(tile, tile), mountain_color)
+
+
+func spawn_wall(pos: Vector2, size: Vector2, color: Color) -> void:
+	var wall: Wall = WallScene.instantiate()
+	wall.position = pos
+	wall.size = size
+	wall.color = color
+	add_child(wall)
+
+
+func spawn_pickup(kind: String, pos: Vector2) -> void:
+	var pickup: Pickup = PickupScene.instantiate()
+	pickup.kind = kind
+	pickup.position = pos
+	add_child(pickup)
 
 
 # Inside the mountains, outside the camp, not inside a rock.
 func random_open_point() -> Vector2:
 	while true:
-		var point := Vector2(randf_range(TILE * 1.5, MAP_SIZE.x - TILE * 1.5),
-				randf_range(TILE * 1.5, MAP_SIZE.y - TILE * 1.5))
-		if point.distance_to(MAP_SIZE / 2) < CAMP_CLEAR_RADIUS:
+		var point := Vector2(randf_range(tile * 1.5, map_size.x - tile * 1.5),
+				randf_range(tile * 1.5, map_size.y - tile * 1.5))
+		if point.distance_to(map_size / 2) < camp_clear_radius:
 			continue
 		if rock_rects.any(func(rect: Rect2): return rect.grow(30).has_point(point)):
 			continue
@@ -165,10 +177,10 @@ func random_open_point() -> Vector2:
 # --- Start rolls ---
 
 func run_start_rolls() -> void:
-	ability = weighted_pick(ABILITIES)
-	await spin("ABILITY ROLL", ABILITIES, ability)
-	playtime = weighted_pick(PLAYTIMES)
-	await spin("HOW LONG YOU GET TO PLAY", PLAYTIMES, playtime)
+	ability = weighted_pick(abilities)
+	await spin("ABILITY ROLL", abilities, ability)
+	playtime = weighted_pick(playtimes)
+	await spin("HOW LONG YOU GET TO PLAY", playtimes, playtime)
 	hud.show_message("Ability: %s\nPlaytime: %s\n\nPress SPACE to start" % [ability.name, playtime.name])
 	while not Input.is_action_just_pressed("confirm"):
 		await get_tree().process_frame
@@ -179,7 +191,7 @@ func spin(title: String, options: Array, result: Dictionary) -> void:
 	for i in 25:
 		hud.show_message("%s\n\n%s" % [title, options.pick_random().name])
 		await get_tree().create_timer(0.03 + i * 0.008).timeout
-	hud.show_message("%s\n\n%s\n%s" % [title, result.name, TIER_FLAVOR[result.tier]])
+	hud.show_message("%s\n\n%s\n%s" % [title, result.name, tier_flavor[result.tier]])
 	await get_tree().create_timer(1.5).timeout
 
 
@@ -209,8 +221,8 @@ func start() -> void:
 func _process(delta: float) -> void:
 	if not started or game_over:
 		return
-	sun_fuel -= FUEL_DRAIN * delta
-	camp.sun_core.refresh(sun_fuel / FUEL_MAX, shards_deposited, SHARDS_TO_WIN)
+	sun_fuel -= fuel_drain * delta
+	camp.sun_core.refresh(sun_fuel / fuel_max, shards_deposited, shards_to_win)
 	if sun_fuel <= 0.0:
 		lose("The sun went cold.")
 	if playtime.seconds > 0:
@@ -263,7 +275,7 @@ func interact() -> void:
 
 func nearest_interactable() -> Node2D:
 	var best: Node2D = null
-	var best_distance := INTERACT_RANGE
+	var best_distance := interact_range
 	for node in get_tree().get_nodes_in_group("interactable"):
 		var distance := player.global_position.distance_to(node.global_position)
 		if distance < best_distance:
@@ -274,16 +286,16 @@ func nearest_interactable() -> Node2D:
 
 # Only takes the fuel the sun needs; extra stays in the backpack.
 func feed_sun() -> void:
-	var needed := ceili((FUEL_MAX - sun_fuel) / FUEL_PER_ITEM)
+	var needed := ceili((fuel_max - sun_fuel) / fuel_per_item)
 	var fuel := mini(player.backpack.count("fuel"), needed)
 	player.backpack.remove("fuel", fuel)
-	sun_fuel = minf(sun_fuel + fuel * FUEL_PER_ITEM, FUEL_MAX)
+	sun_fuel = minf(sun_fuel + fuel * fuel_per_item, fuel_max)
 	var shards := player.backpack.count("shard")
 	player.backpack.remove("shard", shards)
 	shards_deposited += shards
 	if shards > 0:
-		hud.toast("SHARDS IN THE SUN: %d/%d" % [shards_deposited, SHARDS_TO_WIN])
-	if shards_deposited >= SHARDS_TO_WIN and sun_fuel >= FUEL_MAX:
+		hud.toast("SHARDS IN THE SUN: %d/%d" % [shards_deposited, shards_to_win])
+	if shards_deposited >= shards_to_win and sun_fuel >= fuel_max:
 		win()
 
 
@@ -297,29 +309,27 @@ func _on_item_picked(kind: String) -> void:
 		return
 	shards_found += 1
 	stage = mini(1 + int(shards_found / 2.0), 3)
-	hud.toast("SHARD %d/%d  -  STAGE %d\nThey heard that." % [shards_found, SHARDS_TO_WIN, stage])
+	hud.toast("SHARD %d/%d  -  STAGE %d\nThey heard that." % [shards_found, shards_to_win, stage])
 	# Deferred: can't add physics bodies inside a pickup's collision callback.
-	spawn_listeners.call_deferred(SPAWN_PER_SHARD[stage - 1])
-	if shards_found == SCATTERED_SHARDS:
-		boss_timer = BOSS_DELAY
+	spawn_listeners.call_deferred(spawn_per_shard[stage - 1])
+	if shards_found == scattered_shards:
+		boss_timer = boss_delay
 
 
 # --- Enemies ---
 
 func spawn_listeners(count: int) -> void:
 	for i in count:
-		var listener := Listener.new()
-		for stat in STAGE_STATS[stage - 1]:
-			listener.set(stat, STAGE_STATS[stage - 1][stat])
+		var listener: Listener = ListenerScene.instantiate()
+		for stat in stage_stats[stage - 1]:
+			listener.set(stat, stage_stats[stage - 1][stat])
 		listener.target = player
 		listener.position = far_from_player_point()
 		add_child(listener)
 
 
 func spawn_boss() -> void:
-	var boss := Listener.new()
-	for stat in BOSS_STATS:
-		boss.set(stat, BOSS_STATS[stat])
+	var boss: Listener = BossScene.instantiate()
 	boss.target = player
 	boss.position = far_from_player_point()
 	boss.died.connect(func(dead: Listener): drop_shard.call_deferred(dead.global_position))
@@ -328,7 +338,7 @@ func spawn_boss() -> void:
 
 
 func drop_shard(pos: Vector2) -> void:
-	Pickup.spawn(self, "shard", pos)
+	spawn_pickup("shard", pos)
 	hud.toast("THE FINAL SHARD DROPPED")
 
 
@@ -364,22 +374,25 @@ func win() -> void:
 # --- HUD text ---
 
 func sun_fuel_percent() -> float:
-	return sun_fuel / FUEL_MAX * 100.0
+	return sun_fuel / fuel_max * 100.0
 
 
-func status_text() -> String:
+func goal_text() -> String:
 	if not started:
 		return ""
-	var lines := PackedStringArray([
-		"Shards in sun: %d/%d   carrying: %d" % [shards_deposited, SHARDS_TO_WIN, player.backpack.count("shard")],
-		"Stage %d" % stage,
-		"Ability: %s" % ability.name,
-		"Time left: %s" % ("UNLIMITED" if playtime.seconds == 0 else "%d:%02d" % [int(time_left / 60), int(time_left) % 60]),
-		"Shift sprint | Tab backpack | E interact | F eat",
-	])
 	if boss_timer > 0.0:
-		lines.append("THE BOSS ARRIVES IN %d" % ceili(boss_timer))
-	return "\n".join(lines)
+		return "THE BOSS ARRIVES IN %d.\nKill it for the final shard." % ceili(boss_timer)
+	if shards_found >= scattered_shards and shards_found < shards_to_win:
+		return "The boss is out there. Kill it for the final shard."
+	return "Find sun shards and fuel in the dark, then bring them to the Sun Core in camp.\n" \
+		+ "WASD move  -  Left Click sonar  -  Shift sprint  -  Tab backpack  -  E interact  -  F eat"
+
+
+func run_text() -> String:
+	if not started:
+		return ""
+	var time := "UNLIMITED" if playtime.seconds == 0 else "%d:%02d" % [int(time_left / 60), int(time_left) % 60]
+	return "Stage %d\nAbility: %s\nTime left: %s" % [stage, ability.name, time]
 
 
 func prompt_text() -> String:

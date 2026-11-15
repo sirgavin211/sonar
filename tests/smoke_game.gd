@@ -7,8 +7,8 @@ func _initialize() -> void:
 	var main = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame
-	main.ability = main.ABILITIES[0]
-	main.playtime = main.PLAYTIMES[4]
+	main.ability = main.abilities[0]
+	main.playtime = main.playtimes[4]
 	main.start()
 
 	# Sonar wave: open-air Listener gets hit, one behind a wall doesn't.
@@ -17,11 +17,11 @@ func _initialize() -> void:
 	main.player.position = origin
 	var open_target = spawn_listener(main, origin + Vector2(200, 0))
 	var hidden_target = spawn_listener(main, origin + Vector2(-200, 0))
-	Placeholder.wall(main, origin + Vector2(-100, 0), Vector2(20, 120), Color.GRAY)
+	main.spawn_wall(origin + Vector2(-100, 0), Vector2(20, 120), Color.GRAY)
 	await physics_frame
 	var waves := []
 	for aim in [Vector2.RIGHT, Vector2.LEFT]:
-		var wave := SonarWave.new()
+		var wave: SonarWave = load("res://sonar_wave.tscn").instantiate()
 		wave.setup(main.player, aim)
 		main.add_child(wave)
 		waves.append(wave)
@@ -34,13 +34,13 @@ func _initialize() -> void:
 	open_target.queue_free()
 	hidden_target.queue_free()
 
-	for i in main.SCATTERED_SHARDS:
+	for i in main.scattered_shards:
 		assert(main.player.pick_up("shard"))
 	await process_frame
 	assert(main.stage == 3)
 	assert(main.boss_timer > 0.0)
 	var spawned: int = get_nodes_in_group("listeners").size()
-	assert(spawned == main.START_LISTENERS + 3 + 6 + 6 + 20 + 20, "spawned %d" % spawned)
+	assert(spawned == main.start_listeners + 3 + 6 + 6 + 20 + 20, "spawned %d" % spawned)
 
 	var shards_on_ground := func(): return main.get_children().filter(func(n): return n is Pickup and n.kind == "shard").size()
 	var before: int = shards_on_ground.call()
@@ -62,7 +62,7 @@ func _initialize() -> void:
 
 
 func spawn_listener(main, pos: Vector2) -> Listener:
-	var listener := Listener.new()
+	var listener: Listener = load("res://listener.tscn").instantiate()
 	listener.target = main.player
 	listener.max_health = 99
 	listener.speed = 0.0

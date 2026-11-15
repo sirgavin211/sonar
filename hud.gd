@@ -1,129 +1,80 @@
 class_name Hud
 extends CanvasLayer
-# Bars, status text, backpack/chest grids, big messages. Reads state from main each frame.
+# zombs.io-style HUD: goal box, run info, minimap, hotbar, resource table, bars,
+# backpack/chest grids, big messages. Layout lives in hud.tscn; reads state from main each frame.
 
-const SLOT_SIZE := Vector2(64, 64)
+const SLOT_SIZE := Vector2(58, 58)
 
 var game: Node  # main.gd
-var health_bar: ProgressBar
-var fuel_bar: ProgressBar
-var stamina_bar: ProgressBar
-var info: Label
-var prompt: Label
-var toast_label: Label
-var overlay: ColorRect
-var message: Label
-var inventory_panel: PanelContainer
-var backpack_grid: GridContainer
-var chest_grid: GridContainer
 var open_chest: Inventory
+
+@onready var goal: Label = $Root/Goal/Text
+@onready var run_info: Label = $Root/RunInfo/Text
+@onready var toast_label: Label = $Root/Toast
+@onready var minimap: Minimap = $Root/Minimap
+@onready var prompt: Label = $Root/Prompt
+@onready var hotbar: HBoxContainer = $Root/Hotbar
+@onready var food_count: Label = $Root/Stats/Resources/Grid/Food
+@onready var fuel_count: Label = $Root/Stats/Resources/Grid/Fuel
+@onready var shard_count: Label = $Root/Stats/Resources/Grid/Shards
+@onready var in_sun_count: Label = $Root/Stats/Resources/Grid/InSun
+@onready var health_bar: ProgressBar = $Root/Stats/HealthBar
+@onready var stamina_bar: ProgressBar = $Root/Stats/StaminaBar
+@onready var fuel_bar: ProgressBar = $Root/Stats/FuelBar
+@onready var inventory_panel: PanelContainer = $Root/InventoryPanel
+@onready var backpack_grid: GridContainer = $Root/InventoryPanel/Row/Backpack/Grid
+@onready var chest_grid: GridContainer = $Root/InventoryPanel/Row/Chest/Grid
+@onready var overlay: ColorRect = $Root/Overlay
+@onready var message: Label = $Root/Overlay/Message
 
 
 func _ready() -> void:
-	var status := VBoxContainer.new()
-	status.position = Vector2(16, 16)
-	status.custom_minimum_size.x = 260
-	add_child(status)
-	health_bar = make_bar(status, "Health", Color(0.85, 0.2, 0.2))
-	stamina_bar = make_bar(status, "Stamina", Color(0.3, 0.7, 1.0))
-	fuel_bar = make_bar(status, "Sun fuel", Color(1.0, 0.6, 0.1))
-	info = Label.new()
-	status.add_child(info)
-
-	prompt = Label.new()
-	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prompt.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	prompt.offset_top = -80
-	add_child(prompt)
-
-	toast_label = Label.new()
-	toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast_label.add_theme_font_size_override("font_size", 36)
-	toast_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	toast_label.offset_top = 90
-	add_child(toast_label)
-
-	build_inventory_panel()
-	build_overlay()
+	minimap.game = game
+	add_slots(backpack_grid, 15, _on_backpack_slot)
+	add_slots(chest_grid, 15, _on_chest_slot)
+	# Hotbar mirrors the backpack's first row; display only.
+	add_slots(hotbar, 5, Callable())
 
 
-func make_bar(parent: Node, title: String, color: Color) -> ProgressBar:
-	var label := Label.new()
-	label.text = title
-	parent.add_child(label)
-	var bar := ProgressBar.new()
-	bar.custom_minimum_size = Vector2(260, 18)
-	bar.show_percentage = false
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = color
-	bar.add_theme_stylebox_override("fill", fill)
-	parent.add_child(bar)
-	return bar
-
-
-func build_inventory_panel() -> void:
-	inventory_panel = PanelContainer.new()
-	inventory_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	inventory_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	inventory_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	inventory_panel.hide()
-	add_child(inventory_panel)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 32)
-	inventory_panel.add_child(row)
-	backpack_grid = make_grid(row, "Backpack (click to move)", _on_backpack_slot)
-	chest_grid = make_grid(row, "Chest", _on_chest_slot)
-
-
-func make_grid(parent: Node, title: String, on_click: Callable) -> GridContainer:
-	var column := VBoxContainer.new()
-	parent.add_child(column)
-	var label := Label.new()
-	label.text = title
-	column.add_child(label)
-	var grid := GridContainer.new()
-	grid.columns = 5
-	column.add_child(grid)
-	for i in 15:
+# Identical buttons, so they're made here instead of copy-pasted in hud.tscn.
+func add_slots(container: Container, count: int, on_click: Callable) -> void:
+	for i in count:
 		var slot := Button.new()
 		slot.custom_minimum_size = SLOT_SIZE
 		# No focus, or Tab/Space would get eaten by the buttons.
 		slot.focus_mode = Control.FOCUS_NONE
-		slot.pressed.connect(on_click.bind(i))
-		grid.add_child(slot)
-	return grid
-
-
-func build_overlay() -> void:
-	overlay = ColorRect.new()
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	overlay.hide()
-	add_child(overlay)
-	message = Label.new()
-	message.set_anchors_preset(Control.PRESET_FULL_RECT)
-	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	message.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	message.add_theme_font_size_override("font_size", 40)
-	overlay.add_child(message)
+		if on_click.is_valid():
+			slot.pressed.connect(on_click.bind(i))
+		else:
+			slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		container.add_child(slot)
 
 
 func _process(_delta: float) -> void:
-	health_bar.value = game.player.health / Player.MAX_HEALTH * 100.0
-	fuel_bar.value = game.sun_fuel_percent()
-	stamina_bar.value = game.player.stamina / Player.MAX_STAMINA * 100.0
+	var player: Player = game.player
+	health_bar.value = player.health / player.max_health * 100.0
+	stamina_bar.value = player.stamina / player.max_stamina * 100.0
 	# Dim while exhausted so you know sprint is locked.
-	stamina_bar.modulate.a = 0.4 if game.player.exhausted else 1.0
-	info.text = game.status_text()
+	stamina_bar.modulate.a = 0.4 if player.exhausted else 1.0
+	fuel_bar.value = game.sun_fuel_percent()
+	food_count.text = str(player.backpack.count("food"))
+	fuel_count.text = str(player.backpack.count("fuel"))
+	shard_count.text = str(player.backpack.count("shard"))
+	in_sun_count.text = "%d/%d" % [game.shards_deposited, game.shards_to_win]
+	goal.text = game.goal_text()
+	goal.get_parent().visible = goal.text != ""
+	run_info.text = game.run_text()
+	run_info.get_parent().visible = run_info.text != ""
 	prompt.text = game.prompt_text()
+	fill_grid(hotbar, player.backpack)
 	if inventory_panel.visible:
-		fill_grid(backpack_grid, game.player.backpack)
+		fill_grid(backpack_grid, player.backpack)
 		if open_chest:
 			fill_grid(chest_grid, open_chest)
 
 
-func fill_grid(grid: GridContainer, inventory: Inventory) -> void:
-	for i in 15:
+func fill_grid(grid: Container, inventory: Inventory) -> void:
+	for i in grid.get_child_count():
 		var slot: Button = grid.get_child(i)
 		var item = inventory.slots[i]
 		slot.text = "" if item == null else "%s\nx%d" % [item.kind, item.count]

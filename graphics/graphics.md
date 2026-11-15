@@ -1,6 +1,6 @@
 # Graphics to draw (Andrew)
 
-Perspective: **top-down / bird's-eye**. Everything is a rectangle placeholder in code right now (`Placeholder.box` calls). Size listed = current placeholder size in px, so art drops in at the right scale.
+Perspective: **top-down / bird's-eye**. Everything is a rectangle placeholder right now: a `ColorRect` named `Body` (or `Core`/`Barrel`) inside each object's `.tscn` scene. Swap it for a `Sprite2D` in the editor. Size listed = current placeholder size in px, so art drops in at the right scale.
 
 ## Characters
 - [ ] **Player**: detailed circle, 28x28. Facing doesn't matter, the gun rotates separately.
