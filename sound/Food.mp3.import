@@ -3,12 +3,12 @@
 importer="mp3"
 type="AudioStreamMP3"
 uid="uid://tur20osokkib"
-path="res://.godot/imported/Food.mp3-e62a47877dc3d3db788f7590485e2726.mp3str"
+path="res://.godot/imported/FOod.mp3-d7a3cba6765f9e4031c723fdcd01317c.mp3str"
 
 [deps]
 
-source_file="res://sound/Food.mp3"
-dest_files=["res://.godot/imported/Food.mp3-e62a47877dc3d3db788f7590485e2726.mp3str"]
+source_file="res://sound/FOod.mp3"
+dest_files=["res://.godot/imported/FOod.mp3-d7a3cba6765f9e4031c723fdcd01317c.mp3str"]
 
 [params]
 
