@@ -7,16 +7,13 @@ const SLOT_SIZE := Vector2(28, 28)  # Minecraft-style: 16-20px art at 1x plus ro
 
 var game: Node  # main.gd
 
-@onready var goal: Label = $Root/Goal/Text
+@onready var goal: Label = $Root/Top/Goal/Text
+@onready var boss_bar: Control = $Root/Top/BossBar
 @onready var run_info: Label = $Root/RunInfo/Text
 @onready var toast_label: Label = $Root/Toast
 @onready var minimap: Minimap = $Root/Minimap
 @onready var prompt: Label = $Root/Prompt
 @onready var hotbar: HBoxContainer = $Root/Hotbar
-@onready var food_count: Label = $Root/Stats/Resources/Grid/Food
-@onready var fuel_count: Label = $Root/Stats/Resources/Grid/Fuel
-@onready var shard_count: Label = $Root/Stats/Resources/Grid/Shards
-@onready var in_sun_count: Label = $Root/Stats/Resources/Grid/InSun
 @onready var health_bar: ProgressBar = $Root/Stats/HealthBar
 @onready var stamina_bar: ProgressBar = $Root/Stats/StaminaBar
 @onready var fuel_bar: ProgressBar = $Root/Stats/FuelBar
@@ -84,12 +81,9 @@ func _process(_delta: float) -> void:
 	# Dim while exhausted so you know sprint is locked.
 	stamina_bar.modulate.a = 0.4 if player.exhausted else 1.0
 	fuel_bar.value = game.sun_fuel_percent()
-	food_count.text = str(player.backpack.count("food"))
-	fuel_count.text = str(player.backpack.count("fuel"))
-	shard_count.text = str(player.backpack.count("shard"))
-	in_sun_count.text = "%d/%d" % [game.shards_deposited, game.shards_to_win]
 	goal.text = game.goal_text()
 	goal.get_parent().visible = goal.text != ""
+	show_boss_health()
 	run_info.text = game.run_text()
 	run_info.get_parent().visible = run_info.text != ""
 	prompt.text = game.prompt_text()
@@ -100,11 +94,23 @@ func _process(_delta: float) -> void:
 		fill_grid(backpack_grid, player.backpack)
 
 
+# Ender Dragon-style: the boss's name with a long health bar, under the quest bar.
+func show_boss_health() -> void:
+	boss_bar.visible = is_instance_valid(game.boss)  # check before using it: the boss is freed on death
+	if boss_bar.visible:
+		var boss: Listener = game.boss
+		boss_bar.get_node("Name").text = boss.display_name
+		boss_bar.get_node("Health").value = float(boss.health) / boss.max_health * 100.0
+
+
 func fill_grid(grid: Container, inventory: Inventory) -> void:
 	for i in grid.get_child_count():
 		var slot: Button = grid.get_child(i)
 		var item = inventory.slots[i]
 		slot.icon = Pickup.icon_for(item.kind) if item else null
+		if slot.icon:
+			var scale: float = Pickup.HUD_ICON_SCALE.get(item.kind, 1.0)
+			slot.add_theme_constant_override("icon_max_width", roundi(slot.icon.get_width() * scale))
 		# Like Minecraft: no number for a single item.
 		slot.get_node("Count").text = str(item.count) if item and item.count > 1 else ""
 		if item:

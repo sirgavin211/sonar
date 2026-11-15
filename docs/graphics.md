@@ -34,5 +34,5 @@ Art lives in `assets/textures/`, scenes in `scenes/`, and scripts in `scripts/`.
 ## UI
 - [ ] Backpack slot frame (58x58)
 - [ ] Health bar, stamina bar, sun fuel bar
-- [ ] Roll screen (slot-machine look) for the ability + playtime rolls
+- [ ] Roll screen (slot-machine look) for the ability roll
 - [ ] Win screen ("The sun rises") and lose screen ("You froze")

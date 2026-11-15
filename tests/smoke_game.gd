@@ -8,7 +8,6 @@ func _initialize() -> void:
 	root.add_child(main)
 	await process_frame
 	main.ability = main.abilities[0]
-	main.playtime = main.playtimes[4]
 	main.start()
 
 	# Sonar wave: open-air Listener gets hit, one behind a wall doesn't.
@@ -48,23 +47,53 @@ func _initialize() -> void:
 	assert(main.player.health > hurt and main.player.backpack.count("food") == 0, "ate the food")
 	main.player.select(0)
 
-	for i in main.scattered_shards:
+	var shards_on_map := func(): return main.get_children().filter(func(n): return n is Pickup and n.kind == "shard" and not n.is_queued_for_deletion()).size()
+	assert(shards_on_map.call() == main.scattered_shards, "all shards scattered")
+	for i in main.boss_stage() - 1:  # the shards you find before the boss fight
 		assert(main.player.pick_up("shard"))
 	await process_frame
-	assert(main.stage == 3)
-	assert(main.boss_timer > 0.0)
+	assert(main.stage == 3, "one stage per shard, Stage 3 is the boss fight")
+	assert(main.stage_name() == "Stage 3: Boss Fight")
+	assert(shards_on_map.call() == 0, "unfound shards vanish when the boss fight starts")
+	assert(main.boss_timer > 0.0 and main.boss_timer <= main.boss_delay, "boss countdown starts")
 	var spawned: int = get_nodes_in_group("listeners").size()
-	assert(spawned == main.start_listeners + 3 + 6 + 6 + 20 + 20, "spawned %d" % spawned)
+	var expected: int = main.start_listeners
+	for n in main.spawn_per_stage:
+		expected += n
+	assert(spawned == expected, "spawned %d, expected %d" % [spawned, expected])
 
-	var shards_on_ground := func(): return main.get_children().filter(func(n): return n is Pickup and n.kind == "shard").size()
-	var before: int = shards_on_ground.call()
 	main.boss_timer = 0.01
 	await create_timer(0.1).timeout
 	var boss = get_nodes_in_group("listeners").filter(func(l): return l.max_health == 40)[0]
+
+	# Boss red waves: hurt the player, and cancel out with player waves.
+	get_nodes_in_group("listeners").filter(func(l): return l != boss).map(func(l): l.free())
+	boss.speed = 0.0
+	boss.position = main.player.position + Vector2(300, 0)
+	var hp: float = main.player.health
+	var red = load("res://scenes/effects/sonar_wave.tscn").instantiate()
+	red.setup_hostile(main.player, boss.position, Vector2.LEFT, 650.0, 20.0, 380.0)
+	main.add_child(red)
+	await create_timer(1.0).timeout
+	assert(main.player.health <= hp - 20.0, "red wave hurts the player")
+	var red2 = load("res://scenes/effects/sonar_wave.tscn").instantiate()
+	red2.setup_hostile(main.player, boss.position, Vector2.LEFT, 650.0, 20.0, 380.0)
+	main.add_child(red2)
+	var blue = load("res://scenes/effects/sonar_wave.tscn").instantiate()
+	blue.setup(main.player, main.player.global_position, Vector2.RIGHT)
+	main.add_child(blue)
+	await create_timer(0.5).timeout
+	assert(not is_instance_valid(red2) and not is_instance_valid(blue), "player and boss waves cancel out")
+	main.player.health = main.player.max_health
+	var shards_before: int = shards_on_map.call()
 	boss.take_hit(100)
 	await process_frame
 	await process_frame
-	assert(shards_on_ground.call() == before + 1, "boss dropped the final shard")
+	assert(not is_instance_valid(boss), "boss dies")
+	assert(shards_on_map.call() == shards_before + 1, "boss drops the final shard")
+	main.quest_step = main.quests.size()  # past the intro steps, so the bar shows the stage
+	assert(main.goal_text().contains("Bring all"), "quest bar sends you to the Sun")
+	assert(main.player.pick_up("shard"))
 
 	# Hopper: holding fuel at the hopper crumbles one piece per crumble_time into the sun.
 	assert(main.player.backpack.add("fuel", 2))
@@ -77,10 +106,9 @@ func _initialize() -> void:
 	assert(main.player.backpack.count("fuel") == 1, "one piece crumbled")
 	assert(main.sun_fuel > 59.0, "its fuel reached the sun")
 
-	assert(main.player.pick_up("shard"))
 	main.sun_fuel = main.fuel_max
 	main.deposit_shards()
-	assert(main.shards_deposited == 6)
+	assert(main.shards_deposited == main.shards_to_win)
 	assert(main.game_over, "won")
 	print("smoke test passed")
 	quit()

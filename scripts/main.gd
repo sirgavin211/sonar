@@ -21,9 +21,10 @@ const BossScene := preload("res://scenes/characters/boss.tscn")
 @export var bush_count := 180
 @export var pebble_count := 140
 @export var prop_gap := 12.0  # minimum space between any two props
-@export var food_count := 25
+@export var food_count := 38  # 1.5x the old 25
 @export var fuel_count := 40
-@export var scattered_shards := 5  # the last one comes from the boss
+@export var scattered_shards := 5  # spread over the map; only the first two you find count
+@export var shard_spacing := 900.0  # shards are at least this far apart
 @export var camp_clear_radius := 500.0
 @export var ground_tiles: Array[Texture2D] = [
 	preload("res://assets/textures/terrain/01-bare-rock.png"),
@@ -69,7 +70,7 @@ const BossScene := preload("res://scenes/characters/boss.tscn")
 @export var darkness_color := Color(0.03, 0.03, 0.05)
 
 @export_group("Sun")
-@export var shards_to_win := 6
+@export var shards_to_win := 3  # the two you find, plus the one the boss drops
 @export var fuel_max := 100.0
 @export var start_fuel := 60.0
 @export var fuel_per_item := 10.0
@@ -81,14 +82,31 @@ const BossScene := preload("res://scenes/characters/boss.tscn")
 
 @export_group("Enemies")
 @export var start_listeners := 8
-@export var boss_delay := 60.0
-# Index = stage - 1. Stage 3 is meant to be a near-guaranteed loss.
-@export var spawn_per_shard: Array[int] = [3, 6, 20]
+@export var boss_delay := 10.0  # seconds after Stage 3: Boss Fight starts
+# Stage 1 at the start, +1 per shard found; Stage 3 is the boss fight.
+# Both tables are indexed by stage - 1.
+@export var spawn_per_stage: Array[int] = [0, 6, 12]  # Listeners added on reaching each stage
 @export var stage_stats: Array[Dictionary] = [
 	{"speed": 110.0, "max_health": 2, "contact_damage": 12.0},
 	{"speed": 150.0, "max_health": 3, "contact_damage": 18.0},
 	{"speed": 215.0, "max_health": 5, "contact_damage": 35.0},
 ]
+
+@export_group("Quests")
+# Shown one at a time in the bar at the top. "done" is what finishes a step:
+# sonar = fire it, fuel/food = pick one up, hopper = crumble fuel into it,
+# time = info only, moves on after tip_seconds.
+# After the last step the bar shows the stage instead.
+@export var quests: Array[Dictionary] = [
+	{"text": "Use Left Click to shoot sonic waves to search for objects", "done": "sonar"},
+	{"text": "Find fuel to feed the Sun.", "done": "fuel"},
+	{"text": "Feed the fuel into the hopper (hold it, press E)", "done": "hopper"},
+	{"text": "If the Sun Fuel bar runs out, your only heat source is gone and you will freeze to death", "done": "time"},
+	{"text": "Find food to help you heal.", "done": "food"},
+	{"text": "Beware the Listeners who hear the waves made by your sonar", "done": "time"},
+	{"text": "Find the shards that raise the sun back to the atmosphere", "done": "time"},
+]
+@export var tip_seconds := 6.0
 
 @export_group("Start rolls")
 # When each click happens in assets/audio/sfx/SpinClick.mp3 (seconds). Every click flips to a
@@ -109,14 +127,6 @@ const BossScene := preload("res://scenes/characters/boss.tscn")
 	{"name": "SUPERNOVA", "weight": 3, "tier": "jackpot",
 		"mods": {"speed": 120.0, "wave_range": 800.0, "fire_cooldown": -0.4, "wave_damage": 2}},
 ]
-# seconds 0 = unlimited.
-@export var playtimes: Array[Dictionary] = [
-	{"name": "3 minutes", "weight": 40, "tier": "bad", "seconds": 180},
-	{"name": "5 minutes", "weight": 30, "tier": "none", "seconds": 300},
-	{"name": "8 minutes", "weight": 18, "tier": "good", "seconds": 480},
-	{"name": "15 minutes", "weight": 9, "tier": "good", "seconds": 900},
-	{"name": "UNLIMITED", "weight": 3, "tier": "jackpot", "seconds": 0},
-]
 @export var tier_flavor := {"none": "meh.", "bad": "oof.", "good": "LET'S GO", "jackpot": "!!! JACKPOT !!!"}
 
 var player: Player
@@ -128,13 +138,16 @@ var rock_rects: Array[Rect2] = []  # footprint of every placed prop (trees, ston
 var started := false
 var game_over := false
 var ability: Dictionary
-var playtime: Dictionary
-var time_left := 0.0
 var sun_fuel := 0.0
 var shards_found := 0
 var shards_deposited := 0
-var stage := 1
+var stage := 1  # 1 + shards found; 3 = boss fight
+var quest_step := 0  # index into quests; past the end = showing the stage
+var quest_done := {}  # "sonar", "fuel", "food", "shard" once you've done them
+var tip_time := 0.0  # how long the current info-only step has been up
 var boss_timer := -1.0  # < 0 means not counting
+var boss_beaten := false
+var boss: Listener  # the live boss, for the HUD's health bar
 var inside_mix := 1.0  # 1 = full factory ambience, 0 = full outside ambience; you start in camp
 
 
@@ -195,8 +208,7 @@ func build_map() -> void:
 		spawn_pickup("food", random_open_point())
 	for i in fuel_count:
 		spawn_pickup("fuel", random_open_point())
-	for i in scattered_shards:
-		spawn_pickup("shard", random_open_point())
+	scatter_shards()
 
 
 # Ring of blocks on every edge keeps the player in.
@@ -279,6 +291,19 @@ func claim_free_spot(size: Vector2):
 	return null
 
 
+# Shards keep shard_spacing apart so they're spread across the map, not clumped.
+func scatter_shards() -> void:
+	var placed: Array[Vector2] = []
+	for i in scattered_shards:
+		var point := random_open_point()
+		for attempt in 60:
+			if placed.all(func(other: Vector2): return other.distance_to(point) >= shard_spacing):
+				break
+			point = random_open_point()
+		placed.append(point)
+		spawn_pickup("shard", point)
+
+
 func spawn_pickup(kind: String, pos: Vector2) -> void:
 	var pickup: Pickup = PickupScene.instantiate()
 	pickup.kind = kind
@@ -304,9 +329,7 @@ func random_open_point() -> Vector2:
 func run_start_rolls() -> void:
 	ability = weighted_pick(abilities)
 	await spin("ABILITY ROLL", abilities, ability)
-	playtime = weighted_pick(playtimes)
-	await spin("HOW LONG YOU GET TO PLAY", playtimes, playtime)
-	hud.show_message("Ability: %s\nPlaytime: %s\n\nPress SPACE to start" % [ability.name, playtime.name])
+	hud.show_message("Ability: %s\n\nPress SPACE to start" % ability.name)
 	while not Input.is_action_just_pressed("confirm"):
 		await get_tree().process_frame
 
@@ -353,7 +376,6 @@ func weighted_pick(options: Array) -> Dictionary:
 func start() -> void:
 	for stat in ability.mods:
 		player.set(stat, player.get(stat) + ability.mods[stat])
-	time_left = playtime.seconds
 	hud.hide_message()
 	player.frozen = false
 	get_tree().call_group("listeners", "set_physics_process", true)
@@ -367,15 +389,12 @@ func _process(delta: float) -> void:
 	if not started or game_over:
 		return
 	sun_fuel -= fuel_drain * delta
+	advance_quests(delta)
 	if camp.hopper.feeding and not can_use_hopper():
 		camp.hopper.stop()
 	camp.sun_core.refresh(sun_fuel / fuel_max, shards_deposited, shards_to_win)
 	if sun_fuel <= 0.0:
 		lose("The sun went cold.")
-	if playtime.seconds > 0:
-		time_left -= delta
-		if time_left <= 0.0:
-			lose("Time's up. The jackpot ran dry.")
 	if boss_timer > 0.0:
 		boss_timer -= delta
 		if boss_timer <= 0.0:
@@ -455,6 +474,7 @@ func nearest_interactable() -> Node2D:
 
 # Only takes the fuel the sun needs; extra stays in the backpack.
 func _on_hopper_crumbled() -> void:
+	quest_done["hopper"] = true
 	if player.backpack.remove("fuel"):
 		sun_fuel = minf(sun_fuel + fuel_per_item, fuel_max)
 		check_win()
@@ -474,24 +494,58 @@ func check_win() -> void:
 		win()
 
 
+# Moves past every finished step. Out of order is fine: find food first and that
+# step is already done when it comes up.
+func advance_quests(delta: float) -> void:
+	while quest_step < quests.size():
+		var needs: String = quests[quest_step].done
+		if needs == "time":
+			tip_time += delta
+			if tip_time < tip_seconds:
+				return
+			tip_time = 0.0
+			delta = 0.0  # the next info step starts its own clock fresh
+		elif not quest_done.has(needs):
+			return
+		quest_step += 1
+
+
 func _on_shot_fired(at: Vector2) -> void:
+	quest_done["sonar"] = true
 	for listener in get_tree().get_nodes_in_group("listeners"):
 		listener.hear(at, player.aggro_radius)
 
 
 func _on_item_picked(kind: String) -> void:
+	quest_done[kind] = true
 	if kind != "shard":
 		return
+	if stage >= boss_stage():
+		return
 	shards_found += 1
-	var old_stage := stage
-	stage = mini(1 + int(shards_found / 2.0), 3)
-	if stage > old_stage:
-		$StageUpSound.play()
-	hud.toast("SHARD %d/%d  -  STAGE %d\nThey heard that." % [shards_found, shards_to_win, stage])
+	stage += 1
+	$StageUpSound.play()
+	hud.toast("SHARD %d/%d  -  %s\nThey heard that." % [shards_found, shards_to_win, stage_name()])
 	# Deferred: can't add physics bodies inside a pickup's collision callback.
-	spawn_listeners.call_deferred(spawn_per_shard[stage - 1])
-	if shards_found == scattered_shards:
-		boss_timer = boss_delay
+	spawn_listeners.call_deferred(spawn_per_stage[stage - 1])
+	if stage == boss_stage():
+		start_boss_fight()
+
+
+func boss_stage() -> int:
+	return stage_stats.size()
+
+
+func stage_name() -> String:
+	return "Stage %d: Boss Fight" % stage if stage == boss_stage() else "Stage %d" % stage
+
+
+# The shards nobody found vanish, and the boss comes after boss_delay.
+func start_boss_fight() -> void:
+	for node in get_children():
+		if node is Pickup and node.kind == "shard":
+			node.queue_free()
+	boss_timer = boss_delay
 
 
 # --- Enemies ---
@@ -507,15 +561,17 @@ func spawn_listeners(count: int) -> void:
 
 
 func spawn_boss() -> void:
-	var boss: Listener = BossScene.instantiate()
+	boss = BossScene.instantiate()
 	boss.target = player
 	boss.position = far_from_player_point()
-	boss.died.connect(func(dead: Listener): drop_shard.call_deferred(dead.global_position))
+	boss.died.connect(func(dead: Listener): drop_final_shard.call_deferred(dead.global_position))
 	add_child(boss)
 	hud.toast("THE BOSS HAS COME.")
 
 
-func drop_shard(pos: Vector2) -> void:
+# Deferred from the boss's death: can't add the pickup's physics body mid-callback.
+func drop_final_shard(pos: Vector2) -> void:
+	boss_beaten = true
 	spawn_pickup("shard", pos)
 	hud.toast("THE FINAL SHARD DROPPED")
 
@@ -555,22 +611,24 @@ func sun_fuel_percent() -> float:
 	return sun_fuel / fuel_max * 100.0
 
 
+# The quest bar at the top: the current intro step, then the stage.
 func goal_text() -> String:
 	if not started:
 		return ""
+	if quest_step < quests.size():
+		return quests[quest_step].text
+	var text := stage_name()
 	if boss_timer > 0.0:
-		return "THE BOSS ARRIVES IN %d.\nKill it for the final shard." % ceili(boss_timer)
-	if shards_found >= scattered_shards and shards_found < shards_to_win:
-		return "The boss is out there. Kill it for the final shard."
-	return "Find sun shards and fuel in the dark. Fuel goes in the hopper, shards in the Sun Core.\n" \
-		+ "WASD move  -  1-5 pick item  -  Left Click use (sonar / eat)  -  Shift sprint  -  Tab backpack  -  E interact"
+		text += "\nThe boss arrives in %d" % ceili(boss_timer)
+	elif boss_beaten and not game_over:
+		text += "\nBring all %d shards to the Sun." % shards_to_win
+	return text
 
 
 func run_text() -> String:
 	if not started:
 		return ""
-	var time := "UNLIMITED" if playtime.seconds == 0 else "%d:%02d" % [int(time_left / 60), int(time_left) % 60]
-	return "Stage %d\nAbility: %s\nTime left: %s" % [stage, ability.name, time]
+	return "Ability: %s\nShards in sun: %d/%d" % [ability.name, shards_deposited, shards_to_win]
 
 
 func prompt_text() -> String:

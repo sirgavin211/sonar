@@ -5,12 +5,21 @@ extends CharacterBody2D
 
 signal died(listener: Listener)
 
+const WaveScene := preload("res://scenes/effects/sonar_wave.tscn")
+
+@export var display_name := "Listener"  # shown on the boss health bar
 @export var max_health := 2
 @export var speed := 110.0
 @export var contact_damage := 12.0  # per second while touching
 @export var sight_radius := 250.0
 @export var turn_speed := 10.0  # how fast the sprite swings round to face where it's going
 @export var death_sound: AudioStream = preload("res://assets/audio/sfx/Keith Ave.ogg")
+@export_group("Red waves (boss)")
+@export var wave_interval := 0.0  # seconds between red waves while hunting; 0 = never shoots (normal Listeners)
+@export var wave_damage := 20.0
+@export var wave_range := 650.0
+@export var wave_speed := 380.0  # slower than the player's 600, so they can be dodged or shot down
+@export_group("")
 @export var death_volume_db := 12.0  # the clip is quiet (peaks at -12.7 dB); +12 is about as loud as it goes without clipping
 
 var health := 2
@@ -23,6 +32,7 @@ var chasing := false:
 		chasing = value
 var wander_dir := Vector2.ZERO
 var wander_time := 0.0
+var wave_cooldown := 0.0
 
 @onready var size: Vector2 = $CollisionShape2D.shape.size
 @onready var health_bar: WorldBar = $HealthBar
@@ -43,8 +53,22 @@ func _physics_process(delta: float) -> void:
 		wander(delta)
 	move_and_slide()
 	face_movement(delta)
+	shoot_waves(delta)
 	if to_player.length() < (size.x + target.size.x) / 2 + 6:
 		target.take_damage(contact_damage * delta)
+
+
+func shoot_waves(delta: float) -> void:
+	if wave_interval <= 0.0 or not chasing or target.is_dead:
+		return
+	wave_cooldown -= delta
+	if wave_cooldown > 0.0:
+		return
+	wave_cooldown = wave_interval
+	var wave: SonarWave = WaveScene.instantiate()
+	var aim := (target.global_position - global_position).normalized()
+	wave.setup_hostile(target, global_position, aim, wave_range, wave_damage, wave_speed)
+	get_parent().add_child(wave)
 
 
 # The art faces down (+y), hence the -90 degrees. Like the player, the rotated

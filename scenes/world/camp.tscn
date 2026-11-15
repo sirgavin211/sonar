@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/camp.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/world/wall.tscn" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/world/ground.gd" id="8"]
 [ext_resource type="Script" path="res://scripts/effects/stripes.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/effects/warning_light.gd" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/ui/world_tag.tscn" id="11"]
 
 [node name="Camp" type="Node2D"]
 script = ExtResource("1")
@@ -317,3 +318,11 @@ position = Vector2(0, -20)
 
 [node name="Hopper" parent="." instance=ExtResource("7")]
 position = Vector2(150, -20)
+
+[node name="FuelTag" parent="." instance=ExtResource("11")]
+position = Vector2(150, -50)
+text = "FUEL"
+
+[node name="ShardTag" parent="." instance=ExtResource("11")]
+position = Vector2(0, -56)
+text = "SHARDS"

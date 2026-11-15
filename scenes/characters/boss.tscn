@@ -6,10 +6,12 @@
 size = Vector2(80, 80)
 
 [node name="Boss" instance=ExtResource("1")]
+display_name = "Sentinel Sound"
 max_health = 40
 speed = 160.0
 contact_damage = 40.0
 sight_radius = 100000.0
+wave_interval = 2.5
 
 [node name="Body" parent="." index="0"]
 self_modulate = Color(1, 0.45, 0.45, 1)

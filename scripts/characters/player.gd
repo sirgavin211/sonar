@@ -99,7 +99,7 @@ func show_held() -> void:
 	var kind := held_kind()
 	held.visible = kind != "" and kind != "sonar"
 	if held.visible:
-		$Gun/Muzzle/Held/Icon.texture = Pickup.icon_for(kind)
+		$Gun/Muzzle/Held/Icon.texture = Pickup.world_icon_for(kind)
 
 
 # One long looping track: paused when standing still so it picks up where it left off.
@@ -183,6 +183,9 @@ func take_damage(amount: float) -> void:
 		return
 	health -= amount
 	health_bar.ratio = maxf(health, 0.0) / max_health
+	# Contact damage lands every frame; letting the clip finish first makes it ~once a second.
+	if amount > 0.0 and not $HurtSound.playing:
+		$HurtSound.play()
 	if health <= 0.0:
 		health = 0.0
 		is_dead = true

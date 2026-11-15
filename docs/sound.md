@@ -5,7 +5,7 @@ Ticked ones are in the game. Drop new files in `assets/audio/sfx/` (effects) or 
 ## Player
 - [x] Footsteps: `Footsteps.mp3`, loops while walking (one track for inside and outside for now)
 - [ ] Footsteps, metal: walking inside the facility
-- [ ] Hurt: a Listener touches you
+- [x] Hurt: `Hurt.ogg` (from `New Recording 11.m4a`), plays when you take damage; repeats about once a second while a Listener is on you
 - [ ] Death: health hits 0
 - [x] Eat: `Food.mp3`, starts the 1 second crumble (cut if you switch away mid-bite)
 - [x] Sprint footsteps: same track played 1.35x faster
@@ -55,7 +55,6 @@ Ticked ones are in the game. Drop new files in `assets/audio/sfx/` (effects) or 
 - [x] Stage-up sting: `Next Level.mp3`, at shards 2 and 4
 - [ ] Low fuel alarm
 - [ ] Low health heartbeat
-- [ ] Time's up
 - [ ] Lose
 - [ ] Win: the sun rises
 

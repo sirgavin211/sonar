@@ -10,6 +10,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/CollectPts.mp3" id="8"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/Food.mp3" id="9"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/MagicShard.mp3" id="10"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/Hurt.ogg" id="11"]
 
 [sub_resource type="RectangleShape2D" id="shape"]
 size = Vector2(33.00763, 31.998722)
@@ -50,7 +51,7 @@ initial_velocity_min = 15.0
 initial_velocity_max = 40.0
 scale_amount_min = 2.0
 scale_amount_max = 3.0
-color = Color(0.55, 0.8, 0.35, 1)
+color = Color(0.62, 0.4, 0.22, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=325329434]
 position = Vector2(-0.4956491, -3.986549)
@@ -100,3 +101,6 @@ stream = ExtResource("9")
 [node name="ShardSound" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("10")
 max_polyphony = 2
+
+[node name="HurtSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("11")

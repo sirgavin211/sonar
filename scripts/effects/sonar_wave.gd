@@ -4,6 +4,8 @@ extends Node2D
 # bounces off walls on its own; the visible wave joins neighbouring rays, so when
 # part of the front hits a corner it splits into smaller pieces. Anything a ray
 # reaches echoes, sends an EchoReturn back to where it was fired, and Listeners take a hit once.
+# The boss fires hostile (red) waves with setup_hostile(): they bounce the same way,
+# hurt the player once if they reach them, and cancel out with any player wave they touch.
 
 const EchoScene := preload("res://scenes/effects/echo_return.tscn")
 
@@ -14,6 +16,8 @@ const EchoScene := preload("res://scenes/effects/echo_return.tscn")
 @export var rings := 3  # trailing ripples behind the front
 @export var ring_gap := 14.0
 @export var color := Color(0.5, 0.9, 1.0)
+@export var hostile_color := Color(1.0, 0.2, 0.2)
+@export var clash_distance := 16.0  # a player wave and a boss wave this close cancel each other
 
 var shooter: Player
 var direction := 0.0
@@ -22,6 +26,9 @@ var damage := 1
 var traveled := 0.0  # path length so far, bounces included
 var rays: Array[Dictionary] = []  # {pos, dir, bounces}, in order across the cone
 var echoed := {}  # nodes this wave already reached
+var hostile := false  # true for the boss's waves
+var victim: Player  # who a hostile wave hurts
+var hit_victim := false
 
 
 func setup(player: Player, origin: Vector2, aim: Vector2) -> void:
@@ -30,6 +37,25 @@ func setup(player: Player, origin: Vector2, aim: Vector2) -> void:
 	direction = aim.angle()
 	max_range = player.wave_range
 	damage = player.wave_damage
+	add_to_group("player_waves")
+	make_rays()
+
+
+# A red wave from the boss, aimed at the player.
+func setup_hostile(target: Player, origin: Vector2, aim: Vector2, wave_range: float, wave_damage: float, wave_speed: float) -> void:
+	hostile = true
+	victim = target
+	position = origin
+	direction = aim.angle()
+	max_range = wave_range
+	damage = wave_damage
+	speed = wave_speed
+	color = hostile_color
+	add_to_group("boss_waves")
+	make_rays()
+
+
+func make_rays() -> void:
 	for i in ray_count:
 		var angle := direction - arc / 2 + arc * i / (ray_count - 1)
 		rays.append({"pos": position, "dir": Vector2.from_angle(angle), "bounces": 0})
@@ -43,7 +69,11 @@ func _physics_process(delta: float) -> void:
 		return
 	for ray in rays:
 		move_ray(ray, step)
-	echo_reached(step)
+	if hostile:
+		hurt_victim(step)
+		clash_with_player_waves()
+	else:
+		echo_reached(step)
 	queue_redraw()
 
 
@@ -59,7 +89,35 @@ func move_ray(ray: Dictionary, step: float) -> void:
 	ray.pos = hit.position + hit.normal * 0.5
 	ray.dir = ray.dir.bounce(hit.normal)
 	ray.bounces += 1
-	reach(hit.collider)
+	if not hostile:
+		reach(hit.collider)
+
+
+# A boss wave hurts the player once, when any part of it reaches them.
+func hurt_victim(step: float) -> void:
+	if hit_victim or victim.is_dead:
+		return
+	var catch := victim.size.x / 2 + step
+	if rays.any(func(ray): return ray.pos.distance_to(victim.global_position) < catch):
+		hit_victim = true
+		victim.take_damage(damage)
+
+
+# A boss wave and a player wave that touch both disappear.
+func clash_with_player_waves() -> void:
+	for wave in get_tree().get_nodes_in_group("player_waves"):
+		if not wave.is_queued_for_deletion() and touches(wave):
+			wave.queue_free()
+			queue_free()
+			return
+
+
+func touches(other: SonarWave) -> bool:
+	for a in rays:
+		for b in other.rays:
+			if a.pos.distance_to(b.pos) < clash_distance:
+				return true
+	return false
 
 
 # Listeners and pickups aren't solid, so a ray only has to pass near them.
