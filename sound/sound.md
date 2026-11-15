@@ -22,8 +22,6 @@ None of these are wired into the code yet. Drop the files in `sound/` and Gavin 
 - [ ] Pickup fuel
 - [ ] Pickup shard: **big and satisfying**, the dopamine hit
 - [ ] Backpack full: you can't pick something up
-- [ ] Chest open / close
-- [ ] Item move: clicking a stack between backpack and chest
 
 ## Facility
 - [ ] Enter hum: walking through the door

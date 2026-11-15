@@ -1,12 +1,11 @@
 class_name Hud
 extends CanvasLayer
 # zombs.io-style HUD: goal box, run info, minimap, hotbar, resource table, bars,
-# backpack/chest grids, big messages. Layout lives in hud.tscn; reads state from main each frame.
+# backpack grid, big messages. Layout lives in hud.tscn; reads state from main each frame.
 
 const SLOT_SIZE := Vector2(58, 58)
 
 var game: Node  # main.gd
-var open_chest: Inventory
 
 @onready var goal: Label = $Root/Goal/Text
 @onready var run_info: Label = $Root/RunInfo/Text
@@ -23,30 +22,25 @@ var open_chest: Inventory
 @onready var fuel_bar: ProgressBar = $Root/Stats/FuelBar
 @onready var inventory_panel: PanelContainer = $Root/InventoryPanel
 @onready var backpack_grid: GridContainer = $Root/InventoryPanel/Row/Backpack/Grid
-@onready var chest_grid: GridContainer = $Root/InventoryPanel/Row/Chest/Grid
 @onready var overlay: ColorRect = $Root/Overlay
 @onready var message: Label = $Root/Overlay/Message
 
 
 func _ready() -> void:
 	minimap.game = game
-	add_slots(backpack_grid, 15, _on_backpack_slot)
-	add_slots(chest_grid, 15, _on_chest_slot)
-	# Hotbar mirrors the backpack's first row; display only.
-	add_slots(hotbar, 5, Callable())
+	add_slots(backpack_grid, 15)
+	# Hotbar mirrors the backpack's first row.
+	add_slots(hotbar, 5)
 
 
-# Identical buttons, so they're made here instead of copy-pasted in hud.tscn.
-func add_slots(container: Container, count: int, on_click: Callable) -> void:
+# Identical display-only slots, so they're made here instead of copy-pasted in hud.tscn.
+func add_slots(container: Container, count: int) -> void:
 	for i in count:
 		var slot := Button.new()
 		slot.custom_minimum_size = SLOT_SIZE
 		# No focus, or Tab/Space would get eaten by the buttons.
 		slot.focus_mode = Control.FOCUS_NONE
-		if on_click.is_valid():
-			slot.pressed.connect(on_click.bind(i))
-		else:
-			slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		container.add_child(slot)
 
 
@@ -69,8 +63,6 @@ func _process(_delta: float) -> void:
 	fill_grid(hotbar, player.backpack)
 	if inventory_panel.visible:
 		fill_grid(backpack_grid, player.backpack)
-		if open_chest:
-			fill_grid(chest_grid, open_chest)
 
 
 func fill_grid(grid: Container, inventory: Inventory) -> void:
@@ -82,28 +74,16 @@ func fill_grid(grid: Container, inventory: Inventory) -> void:
 			slot.add_theme_color_override("font_color", Pickup.COLORS[item.kind])
 
 
-func open_inventory(chest: Inventory = null) -> void:
-	open_chest = chest
-	chest_grid.get_parent().visible = chest != null
+func open_inventory() -> void:
 	inventory_panel.show()
 
 
 func close_inventory() -> void:
-	open_chest = null
 	inventory_panel.hide()
 
 
 func is_inventory_open() -> bool:
 	return inventory_panel.visible
-
-
-func _on_backpack_slot(index: int) -> void:
-	if open_chest:
-		game.player.backpack.move_slot(index, open_chest)
-
-
-func _on_chest_slot(index: int) -> void:
-	open_chest.move_slot(index, game.player.backpack)
 
 
 func show_message(text: String, dim := true) -> void:

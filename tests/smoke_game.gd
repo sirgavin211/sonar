@@ -22,7 +22,7 @@ func _initialize() -> void:
 	var waves := []
 	for aim in [Vector2.RIGHT, Vector2.LEFT]:
 		var wave: SonarWave = load("res://sonar_wave.tscn").instantiate()
-		wave.setup(main.player, aim)
+		wave.setup(main.player, main.player.global_position, aim)
 		main.add_child(wave)
 		waves.append(wave)
 	await create_timer(0.45).timeout

@@ -24,9 +24,9 @@ var rays: Array[Dictionary] = []  # {pos, dir, bounces}, in order across the con
 var echoed := {}  # nodes this wave already reached
 
 
-func setup(player: Player, aim: Vector2) -> void:
+func setup(player: Player, origin: Vector2, aim: Vector2) -> void:
 	shooter = player
-	position = player.global_position
+	position = origin
 	direction = aim.angle()
 	max_range = player.wave_range
 	damage = player.wave_damage
@@ -47,7 +47,7 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 
-# Walls, chests and the Sun Core (layer 1) reflect the ray and echo.
+# Walls and the Sun Core (layer 1) reflect the ray and echo.
 func move_ray(ray: Dictionary, step: float) -> void:
 	var target: Vector2 = ray.pos + ray.dir * step
 	var query := PhysicsRayQueryParameters2D.create(ray.pos, target, 1)

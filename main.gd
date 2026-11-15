@@ -255,8 +255,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		player.eat()
 
 
-func open_inventory(chest: Inventory = null) -> void:
-	hud.open_inventory(chest)
+func open_inventory() -> void:
+	hud.open_inventory()
 	player.frozen = true
 
 
@@ -266,10 +266,7 @@ func close_inventory() -> void:
 
 
 func interact() -> void:
-	var target := nearest_interactable()
-	if target is Chest:
-		open_inventory(target.inventory)
-	elif target is SunCore:
+	if nearest_interactable() is SunCore:
 		feed_sun()
 
 

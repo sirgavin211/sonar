@@ -18,12 +18,5 @@ func _init() -> void:
 	assert(not bag.remove("food", 4))
 	assert(bag.add("fuel", 10))
 
-	var chest = InventoryScript.new(1)
-	bag.move_slot(1, chest)
-	assert(chest.count("fuel") == 10)
-	assert(bag.count("fuel") == 0)
-	bag.move_slot(0, chest)
-	assert(bag.count("food") == 3, "chest full, stack stays")
-
 	print("inventory tests passed")
 	quit()

@@ -64,10 +64,3 @@ func space_for(kind: String) -> int:
 		elif slot.kind == kind:
 			space += STACK_SIZE - slot.count
 	return space
-
-
-# Moves a whole stack into another inventory if it fits there.
-func move_slot(index: int, to: Inventory) -> void:
-	var slot = slots[index]
-	if slot and to.add(slot.kind, slot.count):
-		slots[index] = null

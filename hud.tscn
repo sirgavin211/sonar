@@ -264,20 +264,9 @@ layout_mode = 2
 
 [node name="Title" type="Label" parent="Root/InventoryPanel/Row/Backpack"]
 layout_mode = 2
-text = "BACKPACK (click to move)"
+text = "BACKPACK"
 
 [node name="Grid" type="GridContainer" parent="Root/InventoryPanel/Row/Backpack"]
-layout_mode = 2
-columns = 5
-
-[node name="Chest" type="VBoxContainer" parent="Root/InventoryPanel/Row"]
-layout_mode = 2
-
-[node name="Title" type="Label" parent="Root/InventoryPanel/Row/Chest"]
-layout_mode = 2
-text = "CHEST"
-
-[node name="Grid" type="GridContainer" parent="Root/InventoryPanel/Row/Chest"]
 layout_mode = 2
 columns = 5
 

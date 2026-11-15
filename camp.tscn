@@ -1,9 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://camp.gd" id="1"]
 [ext_resource type="PackedScene" path="res://wall.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://sun_core.tscn" id="3"]
-[ext_resource type="PackedScene" path="res://chest.tscn" id="4"]
 [ext_resource type="Texture2D" path="res://light_texture.tres" id="5"]
 [ext_resource type="Script" path="res://flat_shape.gd" id="6"]
 
@@ -50,12 +49,3 @@ texture_scale = 2.5
 
 [node name="SunCore" parent="." instance=ExtResource("3")]
 position = Vector2(0, -20)
-
-[node name="Chest1" parent="." instance=ExtResource("4")]
-position = Vector2(-200, -80)
-
-[node name="Chest2" parent="." instance=ExtResource("4")]
-position = Vector2(-200, 0)
-
-[node name="Chest3" parent="." instance=ExtResource("4")]
-position = Vector2(-200, 80)

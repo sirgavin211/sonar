@@ -33,6 +33,7 @@ var is_dead := false
 var cooldown_left := 0.0
 
 @onready var gun: Node2D = $Gun
+@onready var muzzle: Marker2D = $Gun/Muzzle  # center of the orb in the sprite
 @onready var health_bar: WorldBar = $HealthBar
 @onready var size: Vector2 = $CollisionShape2D.shape.size
 
@@ -73,7 +74,8 @@ func aim_direction() -> Vector2:
 
 func shoot() -> void:
 	var wave: SonarWave = WaveScene.instantiate()
-	wave.setup(self, aim_direction())
+	var origin := muzzle.global_position
+	wave.setup(self, origin, (get_global_mouse_position() - origin).normalized())
 	get_parent().add_child(wave)
 	cooldown_left = fire_cooldown
 	shot_fired.emit(global_position)
