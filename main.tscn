@@ -1,6 +1,11 @@
 [gd_scene format=3 uid="uid://bd85jdrkm6gvr"]
 
 [ext_resource type="PackedScene" uid="uid://b4locmxaumksb" path="res://player.tscn" id="1_ig7tw"]
+[ext_resource type="Texture2D" uid="uid://d3vse25n06x8p" path="res://graphics/orig_big.png" id="2_0xm2m"]
+[ext_resource type="Script" path="res://main.gd" id="3_main"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0xm2m"]
+size = Vector2(153, 8)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ntckf"]
 size = Vector2(153, 8)
@@ -8,11 +13,31 @@ size = Vector2(153, 8)
 [node name="Main" type="Node2D" unique_id=645924972]
 position = Vector2(253, 203)
 scale = Vector2(0.98388714, 1.0363221)
+script = ExtResource("3_main")
 
 [node name="Player" parent="." unique_id=1453754596 instance=ExtResource("1_ig7tw")]
 position = Vector2(97.57217, -82.98579)
 
+[node name="Wall3" type="StaticBody2D" parent="." unique_id=1307286014]
+position = Vector2(612.88, -5.79)
+rotation = -1.5737752
+scale = Vector2(2.259843, 1)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Wall3" unique_id=1385011679]
+position = Vector2(66.5, -6)
+shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="ColorRect" type="ColorRect" parent="Wall3" unique_id=1418085118]
+offset_left = -10.0
+offset_top = -9.999999
+offset_right = 30.0
+offset_bottom = 30.0
+scale = Vector2(3.8207245, 0.19135562)
+
 [node name="Floor" type="StaticBody2D" parent="." unique_id=422899475]
+position = Vector2(-76.22826, 18.334068)
+scale = Vector2(4.8215766, 1)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Floor" unique_id=1070428055]
@@ -20,22 +45,6 @@ position = Vector2(66.5, -6)
 shape = SubResource("RectangleShape2D_ntckf")
 
 [node name="ColorRect" type="ColorRect" parent="Floor" unique_id=1754362847]
-offset_left = -10.0
-offset_top = -9.999999
-offset_right = 30.0
-offset_bottom = 30.0
-scale = Vector2(3.8207245, 0.19135562)
-metadata/_edit_use_anchors_ = true
-
-[node name="Floor2" type="StaticBody2D" parent="." unique_id=75631284]
-position = Vector2(166.68579, -29.913479)
-collision_mask = 0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor2" unique_id=997298389]
-position = Vector2(66.5, -6)
-shape = SubResource("RectangleShape2D_ntckf")
-
-[node name="ColorRect" type="ColorRect" parent="Floor2" unique_id=844363836]
 offset_left = -10.0
 offset_top = -9.999999
 offset_right = 30.0
@@ -58,3 +67,76 @@ offset_right = 30.0
 offset_bottom = 30.0
 scale = Vector2(3.8207245, 0.19135562)
 metadata/_edit_use_anchors_ = true
+
+[node name="Background" type="Sprite2D" parent="." unique_id=839054516]
+z_index = -1
+position = Vector2(170.75128, -4.7683716e-06)
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("2_0xm2m")
+
+[node name="Wall" type="StaticBody2D" parent="." unique_id=2083291066]
+position = Vector2(-116.88332, 7.7196074)
+rotation = -1.5737752
+scale = Vector2(2.259843, 1)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Wall" unique_id=362013346]
+position = Vector2(66.5, -6)
+shape = SubResource("RectangleShape2D_ntckf")
+
+[node name="ColorRect" type="ColorRect" parent="Wall" unique_id=400449236]
+offset_left = -10.0
+offset_top = -9.999999
+offset_right = 30.0
+offset_bottom = 30.0
+scale = Vector2(3.8207245, 0.19135562)
+
+[node name="Player2" parent="." instance=ExtResource("1_ig7tw")]
+modulate = Color(1, 0.65, 0.65, 1)
+position = Vector2(450, -83)
+player_id = 2
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(244, -154)
+zoom = Vector2(1.6, 1.6)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="P1Label" type="Label" parent="HUD"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 316.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 28
+text = "P1 glass: 4/4"
+
+[node name="P2Label" type="Label" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -316.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 56.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 28
+text = "P2 glass: 4/4"
+horizontal_alignment = 2
+
+[node name="WinnerLabel" type="Label" parent="HUD"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -80.0
+offset_right = 400.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 56
+text = "Player 1 wins!"
+horizontal_alignment = 1
+vertical_alignment = 1
