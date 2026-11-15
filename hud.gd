@@ -42,18 +42,32 @@ func add_slots(container: Container, count: int) -> void:
 		# No focus, or Tab/Space would get eaten by the buttons.
 		slot.focus_mode = Control.FOCUS_NONE
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Pixel-art icons: scaled up crisp, filling the slot like Minecraft's hotbar.
+		slot.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		slot.expand_icon = true
+		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		slot.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		# Stack size in the bottom-right corner, same style as the slot numbers.
+		var stack := corner_label(slot, Control.PRESET_BOTTOM_RIGHT)
+		stack.name = "Count"
+		stack.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		container.add_child(slot)
 
 
-# Small 1-5 in the corner of each hotbar slot, matching the number keys.
+# Small 1-5 in the top-left of each hotbar slot, matching the number keys.
 func number_slots(container: Container) -> void:
 	for i in container.get_child_count():
-		var number := Label.new()
-		number.text = str(i + 1)
-		number.position = Vector2(5, 1)
-		number.add_theme_font_size_override("font_size", 12)
-		number.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
-		container.get_child(i).add_child(number)
+		corner_label(container.get_child(i), Control.PRESET_TOP_LEFT).text = str(i + 1)
+
+
+# One shared look for the slot number and the stack count.
+func corner_label(slot: Button, corner: Control.LayoutPreset) -> Label:
+	var label := Label.new()
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	slot.add_child(label)
+	label.set_anchors_and_offsets_preset(corner, Control.PRESET_MODE_MINSIZE, 4)
+	return label
 
 
 func _process(_delta: float) -> void:
@@ -83,7 +97,11 @@ func fill_grid(grid: Container, inventory: Inventory) -> void:
 	for i in grid.get_child_count():
 		var slot: Button = grid.get_child(i)
 		var item = inventory.slots[i]
-		slot.text = "" if item == null else "%s\nx%d" % [item.kind, item.count]
+		slot.icon = Pickup.ICONS.get(item.kind) if item else null
+		# Items without art yet show their name instead of an icon.
+		slot.text = item.kind if item and not slot.icon else ""
+		# Like Minecraft: no number for a single item.
+		slot.get_node("Count").text = str(item.count) if item and item.count > 1 else ""
 		if item:
 			slot.add_theme_color_override("font_color", Pickup.COLORS[item.kind])
 

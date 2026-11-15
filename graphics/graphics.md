@@ -14,14 +14,14 @@ Perspective: **top-down / bird's-eye**. Everything is a rectangle placeholder ri
 - [ ] **Echo glow**: optional custom light texture (currently a soft white circle).
 
 ## World
-- [ ] **Ground tile**: dark dirt, tileable.
+- [x] **Ground tile**: 4 tiles, bare rock to dense moss (`01`–`04`), 16x16 drawn 3x. Noise picks them so moss grows in patches.
 - [ ] **Mountain block**: 100x100, tileable, lines the map edge.
-- [ ] **Rocks**: a few variants, 40-120 px.
+- [x] **Nature props** (`nature/`): trees + stones are solid obstacles (replaced the grey rocks), bushes + small rocks are walk-over clutter. Drawn 3x.
 
 ## Items (ground + backpack icon)
 - [ ] **Food**: 20x20
-- [ ] **Fuel**: 20x20 (sun debris / burning chunk)
-- [ ] **Shard**: 20x20 (artificial sun fragment, should feel special)
+- [x] **Fuel**: `Fuel.png`, 20x19.
+- [x] **Shard**: `shard.png`, 14x19 (cut out of `Pixie_Shard.webp`: grey background removed, shrunk 8x to its real pixel size). A transparent PNG at real size next time saves that step.
 
 ## Camp: metal facility (Subnautica-habitat vibe)
 - [ ] **Metal floor**: 480x320 interior

@@ -12,9 +12,14 @@ signal crumbled
 var feeding := false
 var time_left := 0.0
 var shrink: Tween
+var piece_scale := Vector2.ONE  # Piece's scale in hopper.tscn, restored for each new piece
 
-@onready var piece: FlatShape = $Piece
+@onready var piece: Sprite2D = $Piece
 @onready var crumbs: CPUParticles2D = $Crumbs
+
+
+func _ready() -> void:
+	piece_scale = piece.scale
 
 
 func start() -> void:
@@ -35,7 +40,7 @@ func stop() -> void:
 func next_piece() -> void:
 	time_left = crumble_time
 	piece.show()
-	piece.scale = Vector2.ONE
+	piece.scale = piece_scale
 	crumbs.emitting = true
 	if shrink:
 		shrink.kill()

@@ -28,10 +28,15 @@ position = Vector2(3, 12)
 
 [node name="Held" type="Node2D" parent="Gun/Muzzle"]
 visible = false
+
+[node name="Shape" type="Node2D" parent="Gun/Muzzle/Held"]
 script = ExtResource("3")
 size = Vector2(12, 12)
 outline_width = 2.0
 corner_radius = 6.0
+
+[node name="Icon" type="Sprite2D" parent="Gun/Muzzle/Held"]
+texture_filter = 1
 
 [node name="Crumbs" type="CPUParticles2D" parent="Gun/Muzzle"]
 emitting = false

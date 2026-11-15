@@ -13,16 +13,50 @@ const BossScene := preload("res://boss.tscn")
 @export_group("Map")
 @export var map_size := Vector2(4000, 4000)
 @export var tile := 100.0  # mountain block size
-@export var rock_count := 70
-@export var rock_min_size := 40.0
-@export var rock_max_size := 120.0
+@export var tree_count := 45
+@export var stone_count := 30
+@export var bush_count := 90
+@export var pebble_count := 70
 @export var food_count := 25
 @export var fuel_count := 40
 @export var scattered_shards := 5  # the last one comes from the boss
 @export var camp_clear_radius := 500.0
-@export var ground_color := Color(0.33, 0.4, 0.28)
-@export var grid_color := Color(0.29, 0.35, 0.24)
-@export var rock_color := Color(0.4, 0.38, 0.35)
+@export var ground_tiles: Array[Texture2D] = [
+	preload("res://graphics/01-bare-rock.png"),
+	preload("res://graphics/02-sparse-moss.png"),
+	preload("res://graphics/03-patchy-moss.png"),
+	preload("res://graphics/04-dense-moss.png"),
+]
+@export var ground_tile_size := 48.0  # 16px art drawn 3x
+@export var moss_patch_size := 10.0  # tiles across one moss patch
+@export var moss_levels: Array[float] = [-0.12, 0.0, 0.12]  # Perlin cutoffs: stone | sparse | patchy | dense
+@export var camp_stone_radius := 450.0  # the camp always sits in stone this far out
+@export_subgroup("Nature art")
+# Solid (block you, bounce sonar): trees and stones. Walk-over clutter: bushes and pebbles.
+@export var tree_textures: Array[Texture2D] = [
+	preload("res://graphics/nature/32x32/tree-1.png"),
+	preload("res://graphics/nature/32x32/tree-2.png"),
+	preload("res://graphics/nature/32x32/tree-3.png"),
+	preload("res://graphics/nature/32x32/tree-4.png"),
+	preload("res://graphics/nature/48x48/tree-1-48x48.png"),
+	preload("res://graphics/nature/48x48/tree-2-48x48.png"),
+]
+@export var stone_textures: Array[Texture2D] = [
+	preload("res://graphics/nature/32x32/stone-2.png"),
+	preload("res://graphics/nature/32x32/stone-3.png"),
+	preload("res://graphics/nature/32x32/stone-4.png"),
+]
+@export var bush_textures: Array[Texture2D] = [
+	preload("res://graphics/nature/16x16/bush-empty-16.png"),
+	preload("res://graphics/nature/16x16/bush-berries-16.png"),
+]
+@export var pebble_textures: Array[Texture2D] = [
+	preload("res://graphics/nature/16x16/rock-small-16.png"),
+]
+@export var nature_scale := 3.0  # art pixels -> world, matches the ground tiles
+@export var tree_color := Color(0.2, 0.4, 0.3)  # minimap color
+@export var stone_color := Color(0.45, 0.45, 0.5)
+@export_subgroup("")
 @export var mountain_color := Color(0.35, 0.3, 0.3)
 @export var darkness_color := Color(0.03, 0.03, 0.05)
 
@@ -120,16 +154,22 @@ func _ready() -> void:
 func build_map() -> void:
 	var ground := Ground.new()
 	ground.size = map_size
-	ground.color = ground_color
-	ground.line_color = grid_color
+	ground.tiles = ground_tiles
+	ground.cell = ground_tile_size
+	ground.patch_size = moss_patch_size
+	ground.levels = moss_levels
+	ground.stone_center = map_size / 2  # where the camp goes
+	ground.stone_radius = camp_stone_radius
+	ground.noise_seed = randi()
+	ground.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	ground.z_index = -2
 	add_child(ground)
 	build_mountains()
-	for i in rock_count:
-		var size := Vector2(randf_range(rock_min_size, rock_max_size), randf_range(rock_min_size, rock_max_size))
-		var pos := random_open_point()
-		spawn_wall(pos, size, rock_color)
-		rock_rects.append(Rect2(pos - size / 2, size))
+	# Trees block at the trunk (canopy hangs over you); stones at most of their body.
+	scatter_solid(tree_textures, tree_count, 0.45, tree_color, 1)
+	scatter_solid(stone_textures, stone_count, 0.75, stone_color, 0)
+	scatter_clutter(bush_textures, bush_count)
+	scatter_clutter(pebble_textures, pebble_count)
 	for i in food_count:
 		spawn_pickup("food", random_open_point())
 	for i in fuel_count:
@@ -148,12 +188,40 @@ func build_mountains() -> void:
 			spawn_wall(pos, Vector2(tile, tile), mountain_color)
 
 
-func spawn_wall(pos: Vector2, size: Vector2, color: Color) -> void:
+func spawn_wall(pos: Vector2, size: Vector2, color: Color, texture: Texture2D = null) -> Wall:
 	var wall: Wall = WallScene.instantiate()
 	wall.position = pos
 	wall.size = size
 	wall.color = color
+	wall.texture = texture
+	wall.texture_scale = nature_scale
 	add_child(wall)
+	return wall
+
+
+# collider_ratio: how much of the art blocks movement. layer 1 draws over the player.
+func scatter_solid(textures: Array[Texture2D], count: int, collider_ratio: float, color: Color, layer: int) -> void:
+	for i in count:
+		var texture: Texture2D = textures.pick_random()
+		var art := texture.get_size() * nature_scale
+		var pos := random_open_point()
+		var wall := spawn_wall(pos, art * collider_ratio, color, texture)
+		wall.z_index = layer
+		wall.get_node("Sprite").flip_h = randf() < 0.5
+		rock_rects.append(Rect2(pos - art / 2, art))
+
+
+# Walk-over ground clutter: just art, no collision or sonar echo.
+func scatter_clutter(textures: Array[Texture2D], count: int) -> void:
+	for i in count:
+		var sprite := Sprite2D.new()
+		sprite.texture = textures.pick_random()
+		sprite.scale = Vector2.ONE * nature_scale
+		sprite.flip_h = randf() < 0.5
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.z_index = -1
+		sprite.position = random_open_point()
+		add_child(sprite)
 
 
 func spawn_pickup(kind: String, pos: Vector2) -> void:

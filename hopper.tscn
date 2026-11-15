@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://hopper.gd" id="1"]
 [ext_resource type="Script" path="res://flat_shape.gd" id="2"]
+[ext_resource type="Texture2D" path="res://graphics/Fuel.png" id="3"]
 
 [sub_resource type="RectangleShape2D" id="shape"]
 size = Vector2(56, 44)
@@ -23,13 +24,11 @@ color = Color(0.08, 0.08, 0.1, 1)
 outline_width = 2.0
 corner_radius = 3.0
 
-[node name="Piece" type="Node2D" parent="."]
+[node name="Piece" type="Sprite2D" parent="."]
 visible = false
-script = ExtResource("2")
-size = Vector2(16, 16)
-color = Color(1, 0.5, 0.1, 1)
-outline_width = 2.0
-corner_radius = 8.0
+texture_filter = 1
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("3")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("shape")

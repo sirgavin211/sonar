@@ -38,7 +38,7 @@ var eat_tween: Tween
 
 @onready var gun: Node2D = $Gun
 @onready var muzzle: Marker2D = $Gun/Muzzle  # center of the orb in the sprite
-@onready var held: FlatShape = $Gun/Muzzle/Held
+@onready var held: Node2D = $Gun/Muzzle/Held  # holds Shape (no art yet) or Icon
 @onready var crumbs: CPUParticles2D = $Gun/Muzzle/Crumbs
 @onready var health_bar: WorldBar = $HealthBar
 @onready var size: Vector2 = $CollisionShape2D.shape.size
@@ -94,7 +94,9 @@ func show_held() -> void:
 	var kind := held_kind()
 	held.visible = kind != "" and kind != "sonar"
 	if held.visible:
-		held.color = Pickup.COLORS[kind]
+		$Gun/Muzzle/Held/Icon.texture = Pickup.ICONS.get(kind)
+		$Gun/Muzzle/Held/Shape.visible = not Pickup.ICONS.has(kind)
+		$Gun/Muzzle/Held/Shape.color = Pickup.COLORS[kind]
 
 
 # Drains stamina while sprinting and moving, regens otherwise.
