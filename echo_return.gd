@@ -1,22 +1,21 @@
 class_name EchoReturn
 extends Node2D
 # The "bounce back": an arc as wide as the object it came off of,
-# shrinking back toward the player like a reflected sound wave.
+# shrinking back to the spot the wave was fired from (it doesn't follow the player).
 
 @export var speed := 600.0
 @export var min_span := 0.05  # radians, so tiny objects still show
+@export var end_radius := 14.0  # disappears this close to the firing spot
 
-var listener: Player
-var direction := 0.0  # angle from player to the object
+var direction := 0.0  # angle from the firing spot to the object
 var span := 0.0
 var radius := 0.0
 var color := Color.WHITE
 
 
-func setup(player: Player, from: Vector2, object_size: float, echo_color: Color) -> void:
-	listener = player
-	position = player.global_position
-	var offset := from - player.global_position
+func setup(origin: Vector2, from: Vector2, object_size: float, echo_color: Color) -> void:
+	position = origin
+	var offset := from - origin
 	direction = offset.angle()
 	radius = offset.length()
 	# Arc length = object size, so a big rock sends back a wide echo.
@@ -26,10 +25,9 @@ func setup(player: Player, from: Vector2, object_size: float, echo_color: Color)
 
 func _physics_process(delta: float) -> void:
 	radius -= speed * delta
-	if radius <= listener.size.x / 2:
+	if radius <= end_radius:
 		queue_free()
 		return
-	global_position = listener.global_position
 	queue_redraw()
 
 

@@ -3,12 +3,12 @@ extends Node2D
 # Cone of sound fired from the gun, built from a fan of rays. Each ray travels and
 # bounces off walls on its own; the visible wave joins neighbouring rays, so when
 # part of the front hits a corner it splits into smaller pieces. Anything a ray
-# reaches echoes, sends an EchoReturn back to the player, and Listeners take a hit once.
+# reaches echoes, sends an EchoReturn back to where it was fired, and Listeners take a hit once.
 
 const EchoScene := preload("res://echo_return.tscn")
 
 @export var speed := 600.0
-@export_range(1, 360, 1, "radians_as_degrees") var arc := PI / 4  # cone width; 360 for a full ring
+@export_range(1, 360, 1, "radians_as_degrees") var arc := PI / 9  # cone width; 360 for a full ring
 @export var ray_count := 40
 @export var bounce_dim := 0.6  # each bounce makes that piece of the wave dimmer
 @export var rings := 3  # trailing ripples behind the front
@@ -77,7 +77,9 @@ func reach(node: Node) -> void:
 		return
 	echoed[node] = true
 	EchoGlow.flash_on(node)
-	send_echo(node)
+	# Items just light up; only walls and Listeners send a wave back.
+	if not node is Pickup:
+		send_echo(node)
 	if node is Listener:
 		node.take_hit(damage)
 
@@ -86,7 +88,7 @@ func reach(node: Node) -> void:
 func send_echo(node: Node2D) -> void:
 	var echo: EchoReturn = EchoScene.instantiate()
 	var glow: PointLight2D = node.get_node("EchoGlow")
-	echo.setup(shooter, node.global_position, object_size(node), glow.color)
+	echo.setup(position, node.global_position, object_size(node), glow.color)
 	get_parent().add_child(echo)
 
 
