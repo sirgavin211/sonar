@@ -36,12 +36,12 @@ const ABILITIES := [
 	{"name": "Nothing. Unlucky.", "weight": 60, "tier": "none", "mods": {}},
 	{"name": "Heavy Boots (slower)", "weight": 9, "tier": "bad", "mods": {"speed": -60.0}},
 	{"name": "Loud Mouth (Listeners hear you from far)", "weight": 8, "tier": "bad", "mods": {"aggro_radius": 700.0}},
-	{"name": "Butterfingers (slow sonar)", "weight": 8, "tier": "bad", "mods": {"fire_cooldown": 0.3}},
+	{"name": "Butterfingers (slow sonar)", "weight": 8, "tier": "bad", "mods": {"fire_cooldown": 0.5}},
 	{"name": "Quick Feet", "weight": 4, "tier": "good", "mods": {"speed": 90.0}},
-	{"name": "Echo Chamber (more bounces)", "weight": 4, "tier": "good", "mods": {"wave_bounces": 4}},
-	{"name": "Rapid Pulse (fast sonar)", "weight": 4, "tier": "good", "mods": {"fire_cooldown": -0.2}},
+	{"name": "Echo Chamber (bigger waves)", "weight": 4, "tier": "good", "mods": {"wave_range": 500.0}},
+	{"name": "Rapid Pulse (fast sonar)", "weight": 4, "tier": "good", "mods": {"fire_cooldown": -0.3}},
 	{"name": "SUPERNOVA", "weight": 3, "tier": "jackpot",
-		"mods": {"speed": 120.0, "wave_bounces": 6, "fire_cooldown": -0.27, "wave_damage": 2}},
+		"mods": {"speed": 120.0, "wave_range": 800.0, "fire_cooldown": -0.4, "wave_damage": 2}},
 ]
 # seconds 0 = unlimited.
 const PLAYTIMES := [
@@ -55,7 +55,7 @@ const TIER_FLAVOR := {"none": "meh.", "bad": "oof.", "good": "LET'S GO", "jackpo
 
 const KEY_ACTIONS := {
 	"move_up": KEY_W, "move_down": KEY_S, "move_left": KEY_A, "move_right": KEY_D,
-	"backpack": KEY_TAB, "interact": KEY_E, "eat": KEY_F, "confirm": KEY_SPACE, "restart": KEY_R,
+	"backpack": KEY_TAB, "interact": KEY_E, "eat": KEY_F, "confirm": KEY_SPACE, "restart": KEY_R, "sprint": KEY_SHIFT,
 }
 
 var player: Player
@@ -375,7 +375,7 @@ func status_text() -> String:
 		"Stage %d" % stage,
 		"Ability: %s" % ability.name,
 		"Time left: %s" % ("UNLIMITED" if playtime.seconds == 0 else "%d:%02d" % [int(time_left / 60), int(time_left) % 60]),
-		"Tab backpack | E interact | F eat",
+		"Shift sprint | Tab backpack | E interact | F eat",
 	])
 	if boss_timer > 0.0:
 		lines.append("THE BOSS ARRIVES IN %d" % ceili(boss_timer))

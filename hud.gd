@@ -7,6 +7,7 @@ const SLOT_SIZE := Vector2(64, 64)
 var game: Node  # main.gd
 var health_bar: ProgressBar
 var fuel_bar: ProgressBar
+var stamina_bar: ProgressBar
 var info: Label
 var prompt: Label
 var toast_label: Label
@@ -24,6 +25,7 @@ func _ready() -> void:
 	status.custom_minimum_size.x = 260
 	add_child(status)
 	health_bar = make_bar(status, "Health", Color(0.85, 0.2, 0.2))
+	stamina_bar = make_bar(status, "Stamina", Color(0.3, 0.7, 1.0))
 	fuel_bar = make_bar(status, "Sun fuel", Color(1.0, 0.6, 0.1))
 	info = Label.new()
 	status.add_child(info)
@@ -109,6 +111,9 @@ func build_overlay() -> void:
 func _process(_delta: float) -> void:
 	health_bar.value = game.player.health / Player.MAX_HEALTH * 100.0
 	fuel_bar.value = game.sun_fuel_percent()
+	stamina_bar.value = game.player.stamina / Player.MAX_STAMINA * 100.0
+	# Dim while exhausted so you know sprint is locked.
+	stamina_bar.modulate.a = 0.4 if game.player.exhausted else 1.0
 	info.text = game.status_text()
 	prompt.text = game.prompt_text()
 	if inventory_panel.visible:

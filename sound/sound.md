@@ -8,12 +8,14 @@ None of these are wired into the code yet. Drop the files in `sound/` and Gavin 
 - [ ] Hurt: a Listener touches you
 - [ ] Death: health hits 0
 - [ ] Eat: F key, food heals
+- [ ] Sprint footsteps (faster)
+- [ ] Out of breath: stamina runs dry
 
 ## Sonar
 - [ ] Gun fire: every shot (LMB)
-- [ ] Bounce ping: wave hits a wall/rock
-- [ ] Echo return: an object lights up from the wave
-- [ ] Fade-out: wave dies
+- [ ] Echo ping: the wave front reaches a wall/rock and it lights up
+- [ ] Echo return: the bounce-back arc reaches the player (pitch by object size?)
+- [ ] Fade-out: wave reaches max range
 
 ## Items
 - [ ] Pickup food

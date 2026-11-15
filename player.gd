@@ -8,16 +8,22 @@ signal item_picked(kind: String)
 const SIZE := Vector2(28, 28)
 const MAX_HEALTH := 100.0
 const FOOD_HEAL := 30.0
+const MAX_STAMINA := 100.0
+const SPRINT_MULTIPLIER := 1.7
+const STAMINA_DRAIN := 35.0  # per second while sprinting
+const STAMINA_REGEN := 20.0
+const STAMINA_RECOVER_AT := 30.0  # running dry locks sprint until this much is back
 
 # Stats the start-of-game ability roll can change.
 var speed := 220.0
-var fire_cooldown := 0.35
-var wave_speed := 700.0
-var wave_bounces := 3
+var fire_cooldown := 0.6
+var wave_range := 700.0
 var wave_damage := 1
 var aggro_radius := 600.0  # how far Listeners hear the sonar gun
 
 var health := MAX_HEALTH
+var stamina := MAX_STAMINA
+var exhausted := false
 var backpack := Inventory.new(15)  # 3 rows x 5
 var frozen := true  # main unfreezes after the start rolls
 var is_dead := false
@@ -42,12 +48,26 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if frozen or is_dead:
 		return
-	velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * speed
+	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	velocity = direction * speed * sprint_multiplier(direction, delta)
 	move_and_slide()
 	gun.rotation = aim_direction().angle()
 	cooldown_left -= delta
 	if Input.is_action_pressed("shoot") and cooldown_left <= 0.0:
 		shoot()
+
+
+# Drains stamina while sprinting and moving, regens otherwise.
+func sprint_multiplier(direction: Vector2, delta: float) -> float:
+	var sprinting := Input.is_action_pressed("sprint") and direction != Vector2.ZERO and not exhausted
+	if sprinting:
+		stamina = maxf(stamina - STAMINA_DRAIN * delta, 0.0)
+		exhausted = stamina == 0.0
+		return SPRINT_MULTIPLIER
+	stamina = minf(stamina + STAMINA_REGEN * delta, MAX_STAMINA)
+	if exhausted and stamina >= STAMINA_RECOVER_AT:
+		exhausted = false
+	return 1.0
 
 
 func aim_direction() -> Vector2:

@@ -11,6 +11,26 @@ func _initialize() -> void:
 	main.playtime = main.PLAYTIMES[4]
 	main.start()
 
+	# Sonar wave: open-air Listener gets hit, one behind a wall doesn't.
+	# Just below the facility: outside its walls, inside the rock-free zone.
+	var origin: Vector2 = main.camp.position + Vector2(0, 250)
+	main.player.position = origin
+	var open_target = spawn_listener(main, origin + Vector2(200, 0))
+	var hidden_target = spawn_listener(main, origin + Vector2(-200, 0))
+	Placeholder.wall(main, origin + Vector2(-100, 0), Vector2(20, 120), Color.GRAY)
+	await physics_frame
+	for aim in [Vector2.RIGHT, Vector2.LEFT]:
+		var wave := SonarWave.new()
+		wave.setup(main.player, aim)
+		main.add_child(wave)
+	await create_timer(0.45).timeout
+	assert(main.get_children().any(func(n): return n is EchoReturn), "echo bounces back")
+	await create_timer(0.55).timeout
+	assert(open_target.health < open_target.max_health, "wave hits Listener in the open")
+	assert(hidden_target.health == hidden_target.max_health, "walls block the wave")
+	open_target.queue_free()
+	hidden_target.queue_free()
+
 	for i in main.SCATTERED_SHARDS:
 		assert(main.player.pick_up("shard"))
 	await process_frame
@@ -36,3 +56,13 @@ func _initialize() -> void:
 	assert(main.game_over, "won")
 	print("smoke test passed")
 	quit()
+
+
+func spawn_listener(main, pos: Vector2) -> Listener:
+	var listener := Listener.new()
+	listener.target = main.player
+	listener.max_health = 99
+	listener.speed = 0.0
+	listener.position = pos
+	main.add_child(listener)
+	return listener

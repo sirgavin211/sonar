@@ -18,6 +18,7 @@ static func attach(parent: Node, radius: float, glow_color := Color(0.6, 0.9, 1.
 	# Disabled lights cost nothing; the map has hundreds of these.
 	glow.enabled = false
 	parent.add_child(glow)
+	parent.add_to_group("echoable")
 	return glow
 
 

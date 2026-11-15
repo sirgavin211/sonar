@@ -9,7 +9,8 @@ Perspective: **top-down / bird's-eye**. Everything is a rectangle placeholder in
 - [ ] **Boss**: 80x80, big Listener.
 
 ## Sonar
-- [ ] **Sonar wave**: 18x6, points right. It rotates to its travel direction.
+- [ ] **Sonar wave**: expanding arc (45° cone) with trailing ripples, drawn in code now. Optional: a ripple texture or a shader to replace it.
+- [ ] **Echo return**: the smaller arc bouncing back to the player, tinted by the object (drawn in code now).
 - [ ] **Echo glow**: optional custom light texture (currently a soft white circle).
 
 ## World
@@ -31,6 +32,6 @@ Perspective: **top-down / bird's-eye**. Everything is a rectangle placeholder in
 
 ## UI
 - [ ] Backpack/chest slot frame (64x64)
-- [ ] Health bar, sun fuel bar
+- [ ] Health bar, stamina bar, sun fuel bar
 - [ ] Roll screen (slot-machine look) for the ability + playtime rolls
 - [ ] Win screen ("The sun rises") and lose screen ("You froze")
