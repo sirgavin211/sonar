@@ -67,6 +67,8 @@ const BossScene := preload("res://boss.tscn")
 @export var fuel_per_item := 10.0
 @export var fuel_drain := 0.4  # per second
 @export var interact_range := 80.0
+@export var ambience_db := -6.0  # loudness of the inside/outside ambience
+@export var ambience_fade := 0.5  # seconds to crossfade going through the door
 
 @export_group("Enemies")
 @export var start_listeners := 8
@@ -80,6 +82,9 @@ const BossScene := preload("res://boss.tscn")
 ]
 
 @export_group("Start rolls")
+@export var spin_ticks := 35  # names flashed per roll
+@export var spin_fastest := 0.03  # seconds per name at the start
+@export var spin_slowest := 0.45  # seconds per name right before it lands
 # Mods are added to player stats. Weights don't need to sum to 100.
 @export var abilities: Array[Dictionary] = [
 	{"name": "Nothing. Unlucky.", "weight": 60, "tier": "none", "mods": {}},
@@ -118,6 +123,7 @@ var shards_found := 0
 var shards_deposited := 0
 var stage := 1
 var boss_timer := -1.0  # < 0 means not counting
+var inside_mix := 1.0  # 1 = full factory ambience, 0 = full outside ambience; you start in camp
 
 
 func _ready() -> void:
@@ -256,13 +262,25 @@ func run_start_rolls() -> void:
 		await get_tree().process_frame
 
 
-# Slot-machine flicker that slows down, then lands on the result.
+# Slot machine: flashes names super fast, brakes hard at the end, and the last
+# name it slows onto is the result.
 func spin(title: String, options: Array, result: Dictionary) -> void:
-	for i in 25:
-		hud.show_message("%s\n\n%s" % [title, options.pick_random().name])
-		await get_tree().create_timer(0.03 + i * 0.008).timeout
+	var shown := ""
+	for i in spin_ticks:
+		var progress := i / float(spin_ticks - 1)  # 0 at the start .. 1 on the last tick
+		var name: String = result.name if i == spin_ticks - 1 else different_name(options, shown)
+		hud.show_message("%s\n\n%s" % [title, name])
+		shown = name
+		# Cubed so it stays fast for most of the spin, then slows down sharply at the end.
+		await get_tree().create_timer(lerpf(spin_fastest, spin_slowest, progress * progress * progress)).timeout
 	hud.show_message("%s\n\n%s\n%s" % [title, result.name, tier_flavor[result.tier]])
 	await get_tree().create_timer(1.5).timeout
+
+
+# Any option except the one on screen, so every tick visibly changes.
+func different_name(options: Array, current: String) -> String:
+	var others := options.filter(func(option): return option.name != current)
+	return others.pick_random().name
 
 
 func weighted_pick(options: Array) -> Dictionary:
@@ -289,6 +307,7 @@ func start() -> void:
 # --- Loop ---
 
 func _process(delta: float) -> void:
+	update_ambience(delta)
 	if not started or game_over:
 		return
 	sun_fuel -= fuel_drain * delta
@@ -305,6 +324,14 @@ func _process(delta: float) -> void:
 		boss_timer -= delta
 		if boss_timer <= 0.0:
 			spawn_boss()
+
+
+# Both loops always run; walking through the door crossfades between them.
+func update_ambience(delta: float) -> void:
+	var target := 1.0 if camp.contains(player.global_position) else 0.0
+	inside_mix = move_toward(inside_mix, target, delta / ambience_fade)
+	$InsideAmbience.volume_db = ambience_db + linear_to_db(inside_mix)
+	$OutsideAmbience.volume_db = ambience_db + linear_to_db(1.0 - inside_mix)
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -5,3 +5,9 @@ extends Node2D
 
 @onready var sun_core: SunCore = $SunCore
 @onready var hopper: Hopper = $Hopper
+
+
+# Inside the factory floor (the Plates rectangle).
+func contains(point: Vector2) -> bool:
+	var plates: Ground = $Plates
+	return Rect2(plates.position, plates.size).has_point(to_local(point))

@@ -25,7 +25,7 @@ Ticked ones are in the game. Drop new files in `sound/` and Gavin hooks them up.
 
 ## Facility
 - [ ] Enter hum: walking through the door
-- [ ] Interior ambient hum
+- [x] Interior ambient hum: `InterriorAmbience.mp3`, loops while on the factory floor
 - [x] Hopper: `Crunch.mp3` loops while fuel crumbles in
 - [x] Sun Core deposit: `Shard.mp3` when shards go into the sun
 - [ ] Sun ignite stages: the sun gets brighter
@@ -35,7 +35,7 @@ Ticked ones are in the game. Drop new files in `sound/` and Gavin hooks them up.
 - [x] Alert: `Monstruo.mp3`, a Listener growls (from its position) the moment it starts hunting you
 - [ ] Attack: contact damage
 - [ ] Hit by sonar
-- [ ] Death
+- [x] Death: `Keith Ave.ogg` (converted from `Keith Ave.m4a`), plays from where it died; the boss uses it too
 - [ ] Spawn sting: more of them arrive after a shard pickup
 
 ## Boss
@@ -60,6 +60,6 @@ Ticked ones are in the game. Drop new files in `sound/` and Gavin hooks them up.
 - [ ] Win: the sun rises
 
 ## Music / ambient
-- [ ] Dark outdoor ambience
+- [x] Dark outdoor ambience: `OutsideAmbience.mp3`, loops outside (0.5s crossfade at the door)
 - [ ] Stage 3 tension track
 - [ ] Ending track
