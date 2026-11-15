@@ -21,8 +21,8 @@ const BossScene := preload("res://scenes/characters/boss.tscn")
 @export var bush_count := 180
 @export var pebble_count := 140
 @export var prop_gap := 12.0  # minimum space between any two props
-@export var food_count := 38  # 1.5x the old 25
-@export var fuel_count := 40
+@export var food_count := 45  # 1.5x the old 25
+@export var fuel_count := 70
 @export var scattered_shards := 5  # spread over the map; only the first two you find count
 @export var shard_spacing := 900.0  # shards are at least this far apart
 @export var camp_clear_radius := 500.0
@@ -89,24 +89,39 @@ const BossScene := preload("res://scenes/characters/boss.tscn")
 @export var stage_stats: Array[Dictionary] = [
 	{"speed": 110.0, "max_health": 2, "contact_damage": 12.0},
 	{"speed": 150.0, "max_health": 3, "contact_damage": 18.0},
-	{"speed": 215.0, "max_health": 5, "contact_damage": 35.0},
+	{"speed": 160.0, "max_health": 5, "contact_damage": 20.0},  # boss fight: toned down so the boss is the threat
 ]
 
 @export_group("Quests")
 # Shown one at a time in the bar at the top. "done" is what finishes a step:
-# sonar = fire it, fuel/food = pick one up, hopper = crumble fuel into it,
-# time = info only, moves on after tip_seconds.
+# sonar = fire it, sprint = sprint once, fuel/food = pick one up, hopper = crumble fuel into it,
+# time = info only (nothing to do). Once a step is done, "PRESS SPACE FOR NEXT" blinks and
+# Space moves on. {fuel} / {shard} become that item's slot number.
 # After the last step the bar shows the stage instead.
 @export var quests: Array[Dictionary] = [
 	{"text": "Use Left Click to shoot sonic waves to search for objects", "done": "sonar"},
+	{"text": "Hold Shift to sprint (it drains your stamina)", "done": "sprint"},
 	{"text": "Find fuel to feed the Sun.", "done": "fuel"},
-	{"text": "Feed the fuel into the hopper (hold it, press E)", "done": "hopper"},
+	{"text": "Click slot {fuel} (or press {fuel}) to hold the fuel, then press E at the hopper", "done": "hopper"},
 	{"text": "If the Sun Fuel bar runs out, your only heat source is gone and you will freeze to death", "done": "time"},
 	{"text": "Find food to help you heal.", "done": "food"},
 	{"text": "Beware the Listeners who hear the waves made by your sonar", "done": "time"},
 	{"text": "Find the shards that raise the sun back to the atmosphere", "done": "time"},
 ]
-@export var tip_seconds := 6.0
+
+@export_group("Score")
+# Win:  ceil10( bias * ( finish + time_max*time_half/(time_half+T) + per_kill*K + boss_max*boss_half/(boss_half+B) ) )
+# Loss: ceil10( bias * ( per_kill*K + per_stage*(stage-1) ) )
+# T = run seconds, K = Listeners killed, B = seconds the boss lived. The 1/(1+x) curves
+# shrink with time but never reach 0, and bias > 1 plus rounding up keeps scores generous.
+@export var score_finish := 2000
+@export var score_time_max := 6000
+@export var score_time_half := 240.0  # seconds; the time bonus is half at this run length
+@export var score_per_kill := 200
+@export var score_boss_max := 4000
+@export var score_boss_half := 20.0  # seconds; the boss bonus is half if it lives this long
+@export var score_per_stage := 500  # losses only: progress made
+@export var score_bias := 1.25
 
 @export_group("Start rolls")
 # When each click happens in assets/audio/sfx/SpinClick.mp3 (seconds). Every click flips to a
@@ -143,11 +158,16 @@ var shards_found := 0
 var shards_deposited := 0
 var stage := 1  # 1 + shards found; 3 = boss fight
 var quest_step := 0  # index into quests; past the end = showing the stage
+var shown_step := -1  # the step whose text is in shown_text
+var shown_text := ""  # frozen once a step is done, so "slot 2" doesn't change after the fuel is used
 var quest_done := {}  # "sonar", "fuel", "food", "shard" once you've done them
-var tip_time := 0.0  # how long the current info-only step has been up
 var boss_timer := -1.0  # < 0 means not counting
 var boss_beaten := false
 var boss: Listener  # the live boss, for the HUD's health bar
+var run_time := 0.0  # seconds since Space was pressed, frozen at the end
+var kills := 0  # Listeners killed (not the boss)
+var boss_spawned_at := 0.0
+var boss_time := 0.0  # how long the boss lived
 var inside_mix := 1.0  # 1 = full factory ambience, 0 = full outside ambience; you start in camp
 
 
@@ -388,8 +408,9 @@ func _process(delta: float) -> void:
 	update_ambience(delta)
 	if not started or game_over:
 		return
+	run_time += delta
 	sun_fuel -= fuel_drain * delta
-	advance_quests(delta)
+	note_sprint()
 	if camp.hopper.feeding and not can_use_hopper():
 		camp.hopper.stop()
 	camp.sun_core.refresh(sun_fuel / fuel_max, shards_deposited, shards_to_win)
@@ -413,13 +434,11 @@ func update_ambience(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Only once the run has begun: mid-roll the old scene's spin is still waiting and errors when freed.
-	if event.is_action_pressed("restart") and started:
-		get_tree().reload_current_scene()
-		return
 	if not started or game_over:
 		return
-	if event.is_action_pressed("backpack"):
+	if event.is_action_pressed("confirm") and quest_waiting():
+		quest_step += 1
+	elif event.is_action_pressed("backpack"):
 		if hud.is_inventory_open():
 			close_inventory()
 		else:
@@ -496,18 +515,18 @@ func check_win() -> void:
 
 # Moves past every finished step. Out of order is fine: find food first and that
 # step is already done when it comes up.
-func advance_quests(delta: float) -> void:
-	while quest_step < quests.size():
-		var needs: String = quests[quest_step].done
-		if needs == "time":
-			tip_time += delta
-			if tip_time < tip_seconds:
-				return
-			tip_time = 0.0
-			delta = 0.0  # the next info step starts its own clock fresh
-		elif not quest_done.has(needs):
-			return
-		quest_step += 1
+func note_sprint() -> void:
+	if player.has_sprinted:
+		quest_done["sprint"] = true
+
+
+# True when the current tutorial step is finished (or is info only) and is waiting for
+# Space. Steps done early count too: find food first and that step is ready when it comes up.
+func quest_waiting() -> bool:
+	if not started or game_over or quest_step >= quests.size():
+		return false
+	var needs: String = quests[quest_step].done
+	return needs == "time" or quest_done.has(needs)
 
 
 func _on_shot_fired(at: Vector2) -> void:
@@ -557,6 +576,7 @@ func spawn_listeners(count: int) -> void:
 			listener.set(stat, stage_stats[stage - 1][stat])
 		listener.target = player
 		listener.position = far_from_player_point()
+		listener.died.connect(func(_dead: Listener): kills += 1)
 		add_child(listener)
 
 
@@ -564,6 +584,7 @@ func spawn_boss() -> void:
 	boss = BossScene.instantiate()
 	boss.target = player
 	boss.position = far_from_player_point()
+	boss_spawned_at = run_time
 	boss.died.connect(func(dead: Listener): drop_final_shard.call_deferred(dead.global_position))
 	add_child(boss)
 	hud.toast("THE BOSS HAS COME.")
@@ -572,6 +593,7 @@ func spawn_boss() -> void:
 # Deferred from the boss's death: can't add the pickup's physics body mid-callback.
 func drop_final_shard(pos: Vector2) -> void:
 	boss_beaten = true
+	boss_time = run_time - boss_spawned_at
 	spawn_pickup("shard", pos)
 	hud.toast("THE FINAL SHARD DROPPED")
 
@@ -591,7 +613,7 @@ func lose(reason: String) -> void:
 	game_over = true
 	player.frozen = true
 	get_tree().call_group("listeners", "set_physics_process", false)
-	hud.show_message("YOU FROZE\n%s\n\nR to retry" % reason)
+	hud.show_message("YOU FROZE\n%s\n\n%s" % [reason, score_text(false)], true, true)
 
 
 func win() -> void:
@@ -602,7 +624,35 @@ func win() -> void:
 	tween.tween_property(camp.sun_core, "position:y", -1500.0, 5.0).set_trans(Tween.TRANS_SINE)
 	tween.tween_property(camp.sun_core.glow, "energy", 3.0, 5.0)
 	tween.tween_property(darkness, "color", Color.WHITE, 5.0)
-	hud.show_message("THE SUN RISES\nYou relit the world.\n\nR to play again", false)
+	hud.show_message("THE SUN RISES\nYou relit the world.\n\n%s" % score_text(true), false, true)
+
+
+# --- Score ---
+
+# See the formula above the score exports. Faster runs, more kills and a quicker boss
+# kill all score higher; a loss only counts kills and stages reached.
+func score(won: bool) -> int:
+	var total := float(score_per_kill * kills)
+	if won:
+		total += score_finish
+		total += score_time_max * score_time_half / (score_time_half + run_time)
+		total += score_boss_max * score_boss_half / (score_boss_half + boss_time)
+	else:
+		total += score_per_stage * (stage - 1)
+	return ceili(total * score_bias / 10.0) * 10  # round up to the nearest 10
+
+
+func score_text(won: bool) -> String:
+	var lines := PackedStringArray([
+		"Time  %d:%02d" % [int(run_time) / 60, int(run_time) % 60],
+		"Listeners killed  %d" % kills,
+	])
+	if won:
+		lines.append("Boss beaten in  %ds" % ceili(boss_time))
+	else:
+		lines.append("Reached  %s" % stage_name())
+	lines.append("SCORE  %d" % score(won))
+	return "\n".join(lines)
 
 
 # --- HUD text ---
@@ -616,7 +666,10 @@ func goal_text() -> String:
 	if not started:
 		return ""
 	if quest_step < quests.size():
-		return quests[quest_step].text
+		if quest_step != shown_step or not quest_waiting():
+			shown_step = quest_step
+			shown_text = quests[quest_step].text.format({"fuel": slot_key("fuel"), "shard": slot_key("shard")})
+		return shown_text
 	var text := stage_name()
 	if boss_timer > 0.0:
 		text += "\nThe boss arrives in %d" % ceili(boss_timer)
@@ -631,6 +684,12 @@ func run_text() -> String:
 	return "Ability: %s\nShards in sun: %d/%d" % [ability.name, shards_deposited, shards_to_win]
 
 
+# The hotbar key (1-5) for whichever slot holds this item, so hints name the exact key.
+func slot_key(kind: String) -> String:
+	var slot: int = player.backpack.slots.find_custom(func(item): return item != null and item.kind == kind)
+	return str(slot + 1) if slot >= 0 and slot < 5 else "1-5"
+
+
 func prompt_text() -> String:
 	if not started or game_over or hud.is_inventory_open():
 		return ""
@@ -639,9 +698,9 @@ func prompt_text() -> String:
 		if camp.hopper.feeding:
 			return "Crumbling fuel..."
 		if player.held_kind() != "fuel":
-			return "Hold fuel (1-5) to use the hopper"
+			return "Press %s to hold your fuel, then E" % slot_key("fuel")
 		if sun_is_full():
 			return "The sun is full"
 	if target is SunCore and player.held_kind() != "shard":
-		return "Hold a shard (1-5) to put it in the sun"
+		return "Press %s to hold a shard, then E" % slot_key("shard")
 	return target.prompt if target else ""

@@ -85,6 +85,14 @@ func _initialize() -> void:
 	await create_timer(0.5).timeout
 	assert(not is_instance_valid(red2) and not is_instance_valid(blue), "player and boss waves cancel out")
 	main.player.health = main.player.max_health
+	# Score tracking: a Listener kill counts, the boss doesn't.
+	var kills_before: int = main.kills
+	main.spawn_listeners(1)
+	var victim = get_nodes_in_group("listeners").filter(func(l): return l != boss)[-1]
+	victim.take_hit(999)
+	await process_frame
+	assert(main.kills == kills_before + 1, "Listener kill counted")
+
 	var shards_before: int = shards_on_map.call()
 	boss.take_hit(100)
 	await process_frame
@@ -110,6 +118,12 @@ func _initialize() -> void:
 	main.deposit_shards()
 	assert(main.shards_deposited == main.shards_to_win)
 	assert(main.game_over, "won")
+	assert(main.kills == kills_before + 1, "boss isn't counted as a kill")
+	assert(main.boss_time > 0.0, "boss time measured")
+	var won_score: int = main.score(true)
+	assert(won_score > 0 and won_score % 10 == 0, "score rounds up to 10s")
+	assert(won_score > main.score(false), "a win always beats a loss")
+	assert(main.hud.message.text.contains("SCORE  %d" % won_score), "score on the win screen")
 	print("smoke test passed")
 	quit()
 

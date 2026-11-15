@@ -29,6 +29,7 @@ const WaveScene := preload("res://scenes/effects/sonar_wave.tscn")
 var health := 0.0
 var stamina := 0.0
 var exhausted := false
+var has_sprinted := false  # for the "Hold Shift to sprint" quest step
 var backpack := Inventory.new(15)  # 3 rows x 5
 var frozen := true  # main unfreezes after the start rolls
 var is_dead := false
@@ -77,6 +78,9 @@ func use_held(delta: float) -> void:
 		if eat_left <= 0.0:
 			finish_eating()
 		return
+	# A click on a hotbar slot is for the slot, not a sonar shot or a bite.
+	if get_viewport().gui_get_hovered_control() is Button:
+		return
 	var kind := held_kind()
 	if kind == "sonar" and Input.is_action_pressed("shoot") and cooldown_left <= 0.0:
 		shoot()
@@ -115,6 +119,7 @@ func play_footsteps(sprinting: bool) -> void:
 func sprint_multiplier(direction: Vector2, delta: float) -> float:
 	var sprinting := Input.is_action_pressed("sprint") and direction != Vector2.ZERO and not exhausted
 	if sprinting:
+		has_sprinted = true
 		stamina = maxf(stamina - stamina_drain * delta, 0.0)
 		exhausted = stamina == 0.0
 		return sprint_boost

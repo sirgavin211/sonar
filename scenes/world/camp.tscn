@@ -319,9 +319,9 @@ position = Vector2(0, -20)
 [node name="Hopper" parent="." instance=ExtResource("7")]
 position = Vector2(150, -20)
 
-[node name="FuelTag" parent="." instance=ExtResource("11")]
+[node name="HopperTag" parent="." instance=ExtResource("11")]
 position = Vector2(150, -50)
-text = "FUEL"
+text = "HOPPER"
 
 [node name="ShardTag" parent="." instance=ExtResource("11")]
 position = Vector2(0, -56)

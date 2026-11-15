@@ -9,10 +9,12 @@ var game: Node  # main.gd
 
 @onready var goal: Label = $Root/Top/Goal/Text
 @onready var boss_bar: Control = $Root/Top/BossBar
+@onready var next_hint: Label = $Root/Top/Next  # blinks once a tutorial step is done
 @onready var run_info: Label = $Root/RunInfo/Text
 @onready var toast_label: Label = $Root/Toast
 @onready var minimap: Minimap = $Root/Minimap
 @onready var prompt: Label = $Root/Prompt
+@onready var held_name: Label = $Root/HeldName  # name of the item in your hand, just above the hotbar
 @onready var hotbar: HBoxContainer = $Root/Hotbar
 @onready var health_bar: ProgressBar = $Root/Stats/HealthBar
 @onready var stamina_bar: ProgressBar = $Root/Stats/StaminaBar
@@ -20,26 +22,32 @@ var game: Node  # main.gd
 @onready var inventory_panel: PanelContainer = $Root/InventoryPanel
 @onready var backpack_grid: GridContainer = $Root/InventoryPanel/Row/Backpack/Grid
 @onready var overlay: ColorRect = $Root/Overlay
-@onready var message: Label = $Root/Overlay/Message
+@onready var message: Label = $Root/Overlay/Center/Box/Message
+@onready var message_box: PanelContainer = $Root/Overlay/Center/Box
+@onready var box_style: StyleBox = message_box.get_theme_stylebox("panel")  # minimap-style panel for end screens
 
 
 func _ready() -> void:
 	minimap.game = game
 	add_slots(backpack_grid, 15)
 	# Hotbar mirrors the backpack's first row.
-	add_slots(hotbar, 5)
+	add_slots(hotbar, 5, true)
 	number_slots(hotbar)
 
 
 # Identical display-only slots, so they're made here instead of copy-pasted in hud.tscn.
-func add_slots(container: Container, count: int) -> void:
+# clickable: clicking a slot selects it (the hotbar); otherwise display-only (the backpack).
+func add_slots(container: Container, count: int, clickable := false) -> void:
 	for i in count:
 		var slot := Button.new()
 		slot.custom_minimum_size = SLOT_SIZE
 		slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER  # stay square in the taller hotbar row
 		# No focus, or Tab/Space would get eaten by the buttons.
 		slot.focus_mode = Control.FOCUS_NONE
-		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if clickable:
+			slot.pressed.connect(func(): game.player.select(i))
+		else:
+			slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		# Icons at their real 1x size so HUD pixels match the world's.
 		slot.expand_icon = false
 		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -84,9 +92,13 @@ func _process(_delta: float) -> void:
 	goal.text = game.goal_text()
 	goal.get_parent().visible = goal.text != ""
 	show_boss_health()
+	# Shown when waiting for Space; blinks on/off twice a second (hidden half the time).
+	next_hint.visible = game.quest_waiting()
+	next_hint.modulate.a = 1.0 if fmod(Time.get_ticks_msec() / 1000.0, 1.0) < 0.6 else 0.0
 	run_info.text = game.run_text()
 	run_info.get_parent().visible = run_info.text != ""
 	prompt.text = game.prompt_text()
+	held_name.text = Pickup.NAMES.get(player.held_kind(), "")
 	fill_grid(hotbar, player.backpack)
 	for i in hotbar.get_child_count():
 		hotbar.get_child(i).theme_type_variation = &"HotbarSelected" if i == player.selected else &""
@@ -129,8 +141,10 @@ func is_inventory_open() -> bool:
 	return inventory_panel.visible
 
 
-func show_message(text: String, dim := true) -> void:
+# boxed: put the text on a panel (the end screens) so it reads over anything.
+func show_message(text: String, dim := true, boxed := false) -> void:
 	message.text = text
+	message_box.add_theme_stylebox_override("panel", box_style if boxed else StyleBoxEmpty.new())
 	overlay.color = Color(0, 0, 0, 0.75 if dim else 0.0)
 	overlay.show()
 

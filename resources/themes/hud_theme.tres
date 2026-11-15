@@ -1,5 +1,7 @@
 [gd_resource type="Theme" format=3 uid="uid://beod6wuo6dk2o"]
 
+[ext_resource type="Texture2D" uid="uid://d277itl5hbfnr" path="res://assets/ui/menu/slider_grabber.png" id="grabber"]
+
 [sub_resource type="StyleBoxEmpty" id="none"]
 
 [sub_resource type="StyleBoxFlat" id="slot_hover"]
@@ -10,6 +12,11 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.5, 0.52, 0.6, 1)
 anti_aliasing = false
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 1
 
 [sub_resource type="StyleBoxFlat" id="slot"]
 bg_color = Color(0.2, 0.21, 0.26, 0.75)
@@ -19,6 +26,38 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.36, 0.38, 0.45, 1)
 anti_aliasing = false
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 1
+
+[sub_resource type="StyleBoxFlat" id="slider_fill"]
+content_margin_top = 3.0
+content_margin_bottom = 3.0
+bg_color = Color(0.5, 0.9, 1, 1)
+anti_aliasing = false
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 1
+
+[sub_resource type="StyleBoxFlat" id="slider_track"]
+content_margin_top = 3.0
+content_margin_bottom = 3.0
+bg_color = Color(0.1, 0.11, 0.14, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.36, 0.38, 0.45, 1)
+anti_aliasing = false
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 1
 
 [sub_resource type="StyleBoxFlat" id="slot_selected"]
 bg_color = Color(0.3, 0.32, 0.38, 0.9)
@@ -28,6 +67,11 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.95, 0.95, 0.95, 1)
 anti_aliasing = false
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 1
 
 [sub_resource type="StyleBoxFlat" id="panel"]
 content_margin_left = 14.0
@@ -41,6 +85,11 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.07, 0.07, 0.09, 1)
 anti_aliasing = false
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 1
 
 [sub_resource type="StyleBoxFlat" id="bar_back"]
 bg_color = Color(0.16, 0.17, 0.21, 0.75)
@@ -50,6 +99,11 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.07, 0.07, 0.09, 1)
 anti_aliasing = false
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 1
 
 [resource]
 Button/colors/font_color = Color(0.95, 0.95, 0.95, 1)
@@ -58,6 +112,11 @@ Button/styles/focus = SubResource("none")
 Button/styles/hover = SubResource("slot_hover")
 Button/styles/normal = SubResource("slot")
 Button/styles/pressed = SubResource("slot_hover")
+HSlider/icons/grabber = ExtResource("grabber")
+HSlider/icons/grabber_highlight = ExtResource("grabber")
+HSlider/styles/grabber_area = SubResource("slider_fill")
+HSlider/styles/grabber_area_highlight = SubResource("slider_fill")
+HSlider/styles/slider = SubResource("slider_track")
 HotbarSelected/base_type = &"Button"
 HotbarSelected/styles/normal = SubResource("slot_selected")
 Label/colors/font_color = Color(0.93, 0.93, 0.93, 1)

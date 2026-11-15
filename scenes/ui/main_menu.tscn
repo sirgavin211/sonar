@@ -1,12 +1,25 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/ui/menu/play.png" id="2"]
-[ext_resource type="Texture2D" path="res://assets/ui/menu/settings.png" id="3"]
-[ext_resource type="Texture2D" path="res://assets/ui/menu/quit.png" id="4"]
+[ext_resource type="Theme" path="res://resources/themes/hud_theme.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/title_scene.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/ui/title_waves.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/world/ground.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/effects/flat_shape.gd" id="8"]
+[ext_resource type="Texture2D" path="res://resources/textures/light_texture.tres" id="9"]
+[ext_resource type="Texture2D" path="res://assets/textures/characters/main_Character.png" id="10"]
+[ext_resource type="Texture2D" path="res://assets/textures/characters/listener.png" id="11"]
+[ext_resource type="Texture2D" path="res://assets/textures/items/Fuel.png" id="12"]
+[ext_resource type="Texture2D" path="res://assets/textures/items/shard.png" id="13"]
+[ext_resource type="Texture2D" path="res://assets/textures/items/food_small.png" id="14"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrain/01-bare-rock.png" id="15"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrain/02-sparse-moss.png" id="16"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrain/03-patchy-moss.png" id="17"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrain/04-dense-moss.png" id="18"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
+theme = ExtResource("2")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -23,6 +36,94 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0.025, 0.04, 0.055, 1)
+
+[node name="Scene" type="Node2D" parent="."]
+script = ExtResource("5")
+
+[node name="Ground" type="Node2D" parent="Scene"]
+modulate = Color(0.4, 0.42, 0.46, 1)
+position = Vector2(-368, -224)
+script = ExtResource("7")
+size = Vector2(736, 448)
+cell = 32.0
+tiles = Array[Texture2D]([ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18")])
+patch_size = 5.0
+noise_seed = 7
+
+[node name="SunGlow" type="Sprite2D" parent="Scene"]
+self_modulate = Color(1, 0.75, 0.3, 0.55)
+position = Vector2(-228, -110)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("9")
+
+[node name="Sun" type="Node2D" parent="Scene"]
+position = Vector2(-228, -110)
+script = ExtResource("8")
+size = Vector2(44, 44)
+color = Color(1, 0.86, 0.38, 1)
+outline_color = Color(0.55, 0.28, 0.08, 1)
+corner_radius = 22.0
+
+[node name="PlayerWaves" type="Node2D" parent="Scene"]
+position = Vector2(-200, 50)
+script = ExtResource("6")
+reach = 120.0
+
+[node name="BossWaves" type="Node2D" parent="Scene"]
+position = Vector2(232, 128)
+script = ExtResource("6")
+color = Color(1, 0.2, 0.2, 1)
+direction_degrees = 180.0
+reach = 100.0
+period = 2.2
+
+[node name="Player" type="Sprite2D" parent="Scene"]
+position = Vector2(-224, 50)
+rotation = 1.5708
+scale = Vector2(2, 2)
+texture = ExtResource("10")
+
+[node name="Fuel" type="Sprite2D" parent="Scene"]
+position = Vector2(-266, 108)
+scale = Vector2(2, 2)
+texture = ExtResource("12")
+
+[node name="Shard" type="Sprite2D" parent="Scene"]
+position = Vector2(-178, 112)
+scale = Vector2(2, 2)
+texture = ExtResource("13")
+
+[node name="Food" type="Sprite2D" parent="Scene"]
+position = Vector2(-228, 128)
+scale = Vector2(2, 2)
+texture = ExtResource("14")
+
+[node name="Listeners" type="Node2D" parent="Scene"]
+
+[node name="Listener1" type="Sprite2D" parent="Scene/Listeners"]
+position = Vector2(214, -92)
+rotation = 1.5708
+scale = Vector2(2, 2)
+texture = ExtResource("11")
+
+[node name="Listener2" type="Sprite2D" parent="Scene/Listeners"]
+position = Vector2(262, -26)
+rotation = 1.5708
+scale = Vector2(2, 2)
+texture = ExtResource("11")
+
+[node name="Listener3" type="Sprite2D" parent="Scene/Listeners"]
+position = Vector2(210, 42)
+rotation = 1.5708
+scale = Vector2(2, 2)
+texture = ExtResource("11")
+
+[node name="Boss" type="Sprite2D" parent="Scene/Listeners"]
+position = Vector2(266, 128)
+rotation = 1.5708
+scale = Vector2(3, 3)
+self_modulate = Color(1, 0.45, 0.45, 1)
+texture = ExtResource("11")
 
 [node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -42,48 +143,48 @@ theme_override_constants/separation = 14
 
 [node name="Title" type="Label" parent="Center/Panel/Contents"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.94, 0.96, 1)
-theme_override_font_sizes/font_size = 52
+theme_override_colors/font_color = Color(1, 0.86, 0.38, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.07, 0.09, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 55
 text = "SONAR"
 horizontal_alignment = 1
 
 [node name="Buttons" type="VBoxContainer" parent="Center/Panel/Contents"]
 layout_mode = 2
-theme_override_constants/separation = 5
+size_flags_horizontal = 4
+theme_override_constants/separation = 6
 
-[node name="Play" type="TextureButton" parent="Center/Panel/Contents/Buttons"]
-custom_minimum_size = Vector2(260, 68)
+[node name="Play" type="Button" parent="Center/Panel/Contents/Buttons"]
+custom_minimum_size = Vector2(176, 32)
 layout_mode = 2
 focus_mode = 2
-texture_normal = ExtResource("2")
-ignore_texture_size = true
-stretch_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "PLAY"
 
-[node name="Settings" type="TextureButton" parent="Center/Panel/Contents/Buttons"]
-custom_minimum_size = Vector2(260, 68)
+[node name="Settings" type="Button" parent="Center/Panel/Contents/Buttons"]
+custom_minimum_size = Vector2(176, 32)
 layout_mode = 2
 focus_mode = 2
-texture_normal = ExtResource("3")
-ignore_texture_size = true
-stretch_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "SETTINGS"
 
-[node name="Quit" type="TextureButton" parent="Center/Panel/Contents/Buttons"]
-custom_minimum_size = Vector2(260, 68)
+[node name="Quit" type="Button" parent="Center/Panel/Contents/Buttons"]
+custom_minimum_size = Vector2(176, 32)
 layout_mode = 2
 focus_mode = 2
-texture_normal = ExtResource("4")
-ignore_texture_size = true
-stretch_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "QUIT"
 
 [node name="Settings" type="VBoxContainer" parent="Center/Panel/Contents"]
 visible = false
-custom_minimum_size = Vector2(260, 0)
+custom_minimum_size = Vector2(176, 0)
 layout_mode = 2
-theme_override_constants/separation = 16
+size_flags_horizontal = 4
+theme_override_constants/separation = 10
 
 [node name="Label" type="Label" parent="Center/Panel/Contents/Settings"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
 text = "MASTER VOLUME"
 horizontal_alignment = 1
 
@@ -95,7 +196,8 @@ step = 0.01
 value = 1.0
 
 [node name="Back" type="Button" parent="Center/Panel/Contents/Settings"]
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 32)
+theme_override_font_sizes/font_size = 22
 layout_mode = 2
 text = "BACK"
 

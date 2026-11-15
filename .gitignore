@@ -4,3 +4,6 @@
 
 # Finder metadata
 .DS_Store
+
+# Export output
+build/

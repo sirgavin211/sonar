@@ -1,6 +1,14 @@
 class_name Pickup
 extends Area2D
 
+# What each item is called, shown above the hotbar while you hold it.
+const NAMES := {
+	"sonar": "Sonar",
+	"food": "Food",
+	"fuel": "Fuel",
+	"shard": "Sun Shard",
+}
+
 # Item colors, also used by the HUD slots and the held item. Sonar isn't a pickup, it's the starting tool.
 const COLORS := {
 	"sonar": Color(0.4, 0.9, 1.0),

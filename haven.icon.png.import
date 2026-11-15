@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cnwq760sac40j"
-path="res://.godot/imported/play.png-a75ae04bb851bf35cb9d7d633c322200.ctex"
+uid="uid://cxqu5eepyjnmv"
+path="res://.godot/imported/haven.icon.png-09e7a25694c1ae43fbe5edf59c5b35d7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/menu/play.png"
-dest_files=["res://.godot/imported/play.png-a75ae04bb851bf35cb9d7d633c322200.ctex"]
+source_file="res://haven.icon.png"
+dest_files=["res://.godot/imported/haven.icon.png-09e7a25694c1ae43fbe5edf59c5b35d7.ctex"]
 
 [params]
 

@@ -1,6 +1,7 @@
-# Haven
+# SONAR
 
-Open `project.godot` in Godot. The entry scene is `scenes/main.tscn`.
+Open `project.godot` in Godot. The game starts at the title screen, `scenes/ui/main_menu.tscn`;
+Play loads the game itself, `scenes/main.tscn`.
 
 ## Where things live
 
@@ -12,7 +13,7 @@ Open `project.godot` in Godot. The entry scene is `scenes/main.tscn`.
 - `assets/ui/`: project icon.
 - `resources/`: shared themes and generated light textures.
 - `docs/`: graphics and sound task lists.
-- `tests/`: inventory checks and the gameplay smoke test.
+- `tests/`: inventory checks, the menu test, and the gameplay smoke test.
 - `assets/source/`: original audio/art retained for editing, excluded from Godot import.
 - `docs/archive/`: old metadata and an empty legacy placeholder, excluded from Godot import.
 
@@ -26,6 +27,7 @@ From this folder, substitute your Godot executable for `godot`:
 ```sh
 godot --headless --editor --import
 godot --headless --path . --script tests/test_inventory.gd
+godot --headless --path . --script tests/test_menu.gd
 godot --headless --path . --script tests/smoke_game.gd
 ```
 
