@@ -19,12 +19,15 @@ func _initialize() -> void:
 	var hidden_target = spawn_listener(main, origin + Vector2(-200, 0))
 	Placeholder.wall(main, origin + Vector2(-100, 0), Vector2(20, 120), Color.GRAY)
 	await physics_frame
+	var waves := []
 	for aim in [Vector2.RIGHT, Vector2.LEFT]:
 		var wave := SonarWave.new()
 		wave.setup(main.player, aim)
 		main.add_child(wave)
+		waves.append(wave)
 	await create_timer(0.45).timeout
 	assert(main.get_children().any(func(n): return n is EchoReturn), "echo bounces back")
+	assert(waves[1].rays.any(func(ray): return ray.bounces > 0), "wave reflects off the wall")
 	await create_timer(0.55).timeout
 	assert(open_target.health < open_target.max_health, "wave hits Listener in the open")
 	assert(hidden_target.health == hidden_target.max_health, "walls block the wave")

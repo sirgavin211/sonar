@@ -1,11 +1,14 @@
 class_name SonarWave
 extends Node2D
-# Expanding arc of sound fired from the gun. As the front sweeps outward, anything
-# it reaches (with no wall in between) echoes, sends an EchoReturn back to the
-# player, and Listeners take a hit once.
+# Cone of sound fired from the gun, built from a fan of rays. Each ray travels and
+# bounces off walls on its own; the visible wave joins neighbouring rays, so when
+# part of the front hits a corner it splits into smaller pieces. Anything a ray
+# reaches echoes, sends an EchoReturn back to the player, and Listeners take a hit once.
 
 const SPEED := 600.0
 const ARC := PI / 4  # cone width; set to TAU for a full 360 ring
+const RAY_COUNT := 40
+const BOUNCE_DIM := 0.6  # each bounce makes that piece of the wave dimmer
 const RINGS := 3  # trailing ripples behind the front
 const RING_GAP := 14.0
 const COLOR := Color(0.5, 0.9, 1.0)
@@ -14,7 +17,8 @@ var shooter: Player
 var direction := 0.0
 var max_range := 700.0
 var damage := 1
-var radius := 0.0
+var traveled := 0.0  # path length so far, bounces included
+var rays: Array[Dictionary] = []  # {pos, dir, bounces}, in order across the cone
 var echoed := {}  # nodes this wave already reached
 
 
@@ -24,6 +28,9 @@ func setup(player: Player, aim: Vector2) -> void:
 	direction = aim.angle()
 	max_range = player.wave_range
 	damage = player.wave_damage
+	for i in RAY_COUNT:
+		var angle := direction - ARC / 2 + ARC * i / (RAY_COUNT - 1)
+		rays.append({"pos": position, "dir": Vector2.from_angle(angle), "bounces": 0})
 
 
 func _ready() -> void:
@@ -34,30 +41,53 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	radius += SPEED * delta
-	if radius > max_range:
+	var step := SPEED * delta
+	traveled += step
+	if traveled > max_range:
 		queue_free()
 		return
-	echo_reached()
+	for ray in rays:
+		move_ray(ray, step)
+	echo_reached(step)
 	queue_redraw()
 
 
-func echo_reached() -> void:
+# Walls, chests and the Sun Core (layer 1) reflect the ray and echo.
+func move_ray(ray: Dictionary, step: float) -> void:
+	var target: Vector2 = ray.pos + ray.dir * step
+	var query := PhysicsRayQueryParameters2D.create(ray.pos, target, 1)
+	var hit := get_world_2d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		ray.pos = target
+		return
+	# Nudge off the surface so the next cast doesn't start inside the wall.
+	ray.pos = hit.position + hit.normal * 0.5
+	ray.dir = ray.dir.bounce(hit.normal)
+	ray.bounces += 1
+	reach(hit.collider)
+
+
+# Listeners and pickups aren't solid, so a ray only has to pass near them.
+func echo_reached(step: float) -> void:
 	for node in get_tree().get_nodes_in_group("echoable"):
-		if echoed.has(node):
+		if echoed.has(node) or node is StaticBody2D:
 			continue
-		var offset: Vector2 = node.global_position - global_position
-		if offset.length() > radius or absf(angle_difference(direction, offset.angle())) > ARC / 2:
-			continue
-		echoed[node] = true
-		if not can_hear(node):
-			continue
-		EchoGlow.flash_on(node)
-		send_echo(node)
-		if node is Listener:
-			node.take_hit(damage)
+		var catch := object_size(node) / 2 + step
+		if rays.any(func(ray): return ray.pos.distance_to(node.global_position) < catch):
+			reach(node)
 
 
+func reach(node: Node) -> void:
+	if echoed.has(node) or not node.is_in_group("echoable"):
+		return
+	echoed[node] = true
+	EchoGlow.flash_on(node)
+	send_echo(node)
+	if node is Listener:
+		node.take_hit(damage)
+
+
+# shortcut: echo returns in a straight line, not along the bounced path; trace back the ray's path if it looks wrong in play
 func send_echo(node: Node2D) -> void:
 	var echo := EchoReturn.new()
 	var glow: PointLight2D = node.get_node("EchoGlow")
@@ -73,19 +103,19 @@ func object_size(node: Node2D) -> float:
 	return 20.0
 
 
-# Walls block sound: a ray to the node must hit nothing, or the node itself.
-func can_hear(node: Node2D) -> bool:
-	var query := PhysicsRayQueryParameters2D.create(global_position, node.global_position, 1)
-	var hit := get_world_2d().direct_space_state.intersect_ray(query)
-	return hit.is_empty() or hit.collider == node
-
-
 func _draw() -> void:
-	var fade := 1.0 - radius / max_range
-	for i in RINGS:
-		var ring_radius := radius - i * RING_GAP
-		if ring_radius <= 0.0:
-			break
-		var color := COLOR
-		color.a = fade / (i + 1)
-		draw_arc(Vector2.ZERO, ring_radius, direction - ARC / 2, direction + ARC / 2, 32, color, 3.0)
+	var fade := 1.0 - traveled / max_range
+	# Neighbours further apart than this have split (one hit a corner, one didn't).
+	var max_gap := traveled * ARC / (RAY_COUNT - 1) * 2.5 + 4.0
+	for i in RAY_COUNT - 1:
+		var a: Dictionary = rays[i]
+		var b: Dictionary = rays[i + 1]
+		if a.bounces != b.bounces or a.pos.distance_to(b.pos) > max_gap:
+			continue
+		for ring in RINGS:
+			var back := ring * RING_GAP
+			if back >= traveled:
+				break
+			var color := COLOR
+			color.a = fade * pow(BOUNCE_DIM, a.bounces) / (ring + 1)
+			draw_line(to_local(a.pos - a.dir * back), to_local(b.pos - b.dir * back), color, 3.0)
