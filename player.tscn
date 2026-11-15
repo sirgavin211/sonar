@@ -8,6 +8,8 @@
 [ext_resource type="AudioStream" path="res://sound/Footsteps.mp3" id="6"]
 [ext_resource type="AudioStream" path="res://sound/SonarGSpot.mp3" id="7"]
 [ext_resource type="AudioStream" path="res://sound/CollectPts.mp3" id="8"]
+[ext_resource type="AudioStream" path="res://sound/Food.mp3" id="9"]
+[ext_resource type="AudioStream" path="res://sound/MagicShard.mp3" id="10"]
 
 [sub_resource type="RectangleShape2D" id="shape"]
 size = Vector2(33.00763, 31.998722)
@@ -91,3 +93,10 @@ max_polyphony = 3
 [node name="CollectSound" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("8")
 max_polyphony = 3
+
+[node name="EatSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("9")
+
+[node name="ShardSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("10")
+max_polyphony = 2

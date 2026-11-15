@@ -48,7 +48,8 @@ func add_slots(container: Container, count: int) -> void:
 		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		slot.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
 		# Stack size in the bottom-right corner, same style as the slot numbers.
-		var stack := corner_label(slot, HORIZONTAL_ALIGNMENT_RIGHT, VERTICAL_ALIGNMENT_BOTTOM)
+		# Inset so the number tucks into the icon's corner, overlapping it slightly like Minecraft.
+		var stack := corner_label(slot, HORIZONTAL_ALIGNMENT_RIGHT, VERTICAL_ALIGNMENT_BOTTOM, 3)
 		stack.name = "Count"
 		container.add_child(slot)
 
@@ -61,7 +62,7 @@ func number_slots(container: Container) -> void:
 
 # One shared look for the slot number and the stack count. The label covers the
 # whole slot and aligns its text into a corner, so it never spills outside.
-func corner_label(slot: Button, across: HorizontalAlignment, down: VerticalAlignment) -> Label:
+func corner_label(slot: Button, across: HorizontalAlignment, down: VerticalAlignment, inset := 1) -> Label:
 	var label := Label.new()
 	label.add_theme_font_size_override("font_size", 11)
 	label.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
@@ -72,7 +73,7 @@ func corner_label(slot: Button, across: HorizontalAlignment, down: VerticalAlign
 	label.vertical_alignment = down
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(label)
-	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 1)
+	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, inset)
 	return label
 
 

@@ -9,10 +9,16 @@ signal died(listener: Listener)
 @export var speed := 110.0
 @export var contact_damage := 12.0  # per second while touching
 @export var sight_radius := 250.0
+@export var turn_speed := 10.0  # how fast the sprite swings round to face where it's going
 
 var health := 2
 var target: Player
-var chasing := false
+# Growls (positional, so you hear where from) the moment it starts hunting you.
+var chasing := false:
+	set(value):
+		if value and not chasing:
+			$Growl.play()
+		chasing = value
 var wander_dir := Vector2.ZERO
 var wander_time := 0.0
 
@@ -34,8 +40,16 @@ func _physics_process(delta: float) -> void:
 	else:
 		wander(delta)
 	move_and_slide()
+	face_movement(delta)
 	if to_player.length() < (size.x + target.size.x) / 2 + 6:
 		target.take_damage(contact_damage * delta)
+
+
+# The art faces down (+y), hence the -90 degrees. Like the player, the rotated
+# sprite snaps to the screen's pixel grid, so its pixels shift as it turns.
+func face_movement(delta: float) -> void:
+	if velocity.length() > 1.0:
+		$Body.rotation = lerp_angle($Body.rotation, velocity.angle() - PI / 2, turn_speed * delta)
 
 
 func wander(delta: float) -> void:

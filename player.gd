@@ -141,7 +141,11 @@ func shoot() -> void:
 func pick_up(kind: String) -> bool:
 	if not backpack.add(kind):
 		return false
-	$CollectSound.play()
+	# Shards get their own big sound; everything else the normal pickup blip.
+	if kind == "shard":
+		$ShardSound.play()
+	else:
+		$CollectSound.play()
 	item_picked.emit(kind)
 	return true
 
@@ -150,24 +154,28 @@ func pick_up(kind: String) -> bool:
 func start_eating() -> void:
 	eat_left = eat_time
 	crumbs.emitting = true
+	$EatSound.play()
 	held.scale = Vector2.ONE
 	eat_tween = create_tween()
 	eat_tween.tween_property(held, "scale", Vector2.ZERO, eat_time)
 
 
 func finish_eating() -> void:
-	stop_eating()
+	stop_eating(false)
 	if backpack.remove("food"):
 		health = minf(health + food_heal, max_health)
 		health_bar.ratio = health / max_health
 
 
-func stop_eating() -> void:
+# cut_sound: switching away mid-bite cuts the crunch; finishing lets it ring out.
+func stop_eating(cut_sound := true) -> void:
 	if eat_tween:
 		eat_tween.kill()
 	eat_left = 0.0
 	crumbs.emitting = false
 	held.scale = Vector2.ONE
+	if cut_sound:
+		$EatSound.stop()
 
 
 func take_damage(amount: float) -> void:

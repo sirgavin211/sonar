@@ -371,6 +371,7 @@ func deposit_shards() -> void:
 	var shards := player.backpack.count("shard")
 	player.backpack.remove("shard", shards)
 	shards_deposited += shards
+	camp.sun_core.get_node("ShardInSound").play()
 	hud.toast("SHARDS IN THE SUN: %d/%d" % [shards_deposited, shards_to_win])
 	check_win()
 

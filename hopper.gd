@@ -26,11 +26,13 @@ func start() -> void:
 	if feeding:
 		return
 	feeding = true
+	$CrunchSound.play()
 	next_piece()
 
 
 func stop() -> void:
 	feeding = false
+	$CrunchSound.stop()
 	piece.hide()
 	crumbs.emitting = false
 	if shrink:

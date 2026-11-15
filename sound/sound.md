@@ -7,7 +7,7 @@ Ticked ones are in the game. Drop new files in `sound/` and Gavin hooks them up.
 - [ ] Footsteps, metal: walking inside the facility
 - [ ] Hurt: a Listener touches you
 - [ ] Death: health hits 0
-- [ ] Eat: 1 second crumble while holding food
+- [x] Eat: `Food.mp3`, starts the 1 second crumble (cut if you switch away mid-bite)
 - [x] Sprint footsteps: same track played 1.35x faster
 - [ ] Out of breath: stamina runs dry
 
@@ -18,20 +18,21 @@ Ticked ones are in the game. Drop new files in `sound/` and Gavin hooks them up.
 - [ ] Fade-out: wave reaches max range
 
 ## Items
-- [x] Pickup food / fuel / shard: `CollectPts.mp3` (one sound for all three for now)
+- [x] Pickup food / fuel: `CollectPts.mp3`
 - [ ] Pickup fuel (own sound)
-- [ ] Pickup shard: **big and satisfying**, the dopamine hit
+- [x] Pickup shard: `MagicShard.mp3`, **big and satisfying**
 - [ ] Backpack full: you can't pick something up
 
 ## Facility
 - [ ] Enter hum: walking through the door
 - [ ] Interior ambient hum
-- [ ] Sun Core deposit: feeding fuel/shards
+- [x] Hopper: `Crunch.mp3` loops while fuel crumbles in
+- [x] Sun Core deposit: `Shard.mp3` when shards go into the sun
 - [ ] Sun ignite stages: the sun gets brighter
 
 ## Listeners
 - [ ] Idle clicks / breathing
-- [ ] Alert: they heard your sonar
+- [x] Alert: `Monstruo.mp3`, a Listener growls (from its position) the moment it starts hunting you
 - [ ] Attack: contact damage
 - [ ] Hit by sonar
 - [ ] Death

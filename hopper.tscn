@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://hopper.gd" id="1"]
 [ext_resource type="Script" path="res://flat_shape.gd" id="2"]
 [ext_resource type="Texture2D" path="res://graphics/Fuel.png" id="3"]
+[ext_resource type="AudioStream" path="res://sound/Crunch.mp3" id="4"]
 
 [sub_resource type="RectangleShape2D" id="shape"]
 size = Vector2(64, 52)
@@ -46,3 +47,7 @@ initial_velocity_max = 18.0
 scale_amount_min = 2.0
 scale_amount_max = 3.0
 color = Color(1, 0.5, 0.1, 1)
+
+[node name="CrunchSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4")
+max_distance = 600.0
