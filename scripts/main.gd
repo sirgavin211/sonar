@@ -163,6 +163,8 @@ func _ready() -> void:
 	add_child(hud)
 
 	spawn_listeners(start_listeners)
+	# Frozen until the run starts, so nothing can wander in and kill you on the SPACE screen.
+	get_tree().call_group("listeners", "set_physics_process", false)
 	await run_start_rolls()
 	start()
 
@@ -354,6 +356,7 @@ func start() -> void:
 	time_left = playtime.seconds
 	hud.hide_message()
 	player.frozen = false
+	get_tree().call_group("listeners", "set_physics_process", true)
 	started = true
 
 
@@ -391,7 +394,8 @@ func update_ambience(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("restart"):
+	# Only once the run has begun: mid-roll the old scene's spin is still waiting and errors when freed.
+	if event.is_action_pressed("restart") and started:
 		get_tree().reload_current_scene()
 		return
 	if not started or game_over:
@@ -429,7 +433,13 @@ func interact() -> void:
 
 # Holding fuel, standing at the hopper, and the sun still has room.
 func can_use_hopper() -> bool:
-	return player.held_kind() == "fuel" and nearest_interactable() is Hopper and sun_fuel < fuel_max
+	return player.held_kind() == "fuel" and nearest_interactable() is Hopper and not sun_is_full()
+
+
+# Full = can't fit another whole piece of fuel. Not exactly fuel_max: the sun drains every
+# frame, so it would only ever be "full" for one frame (you couldn't win by filling it first).
+func sun_is_full() -> bool:
+	return sun_fuel > fuel_max - fuel_per_item
 
 
 func nearest_interactable() -> Node2D:
@@ -460,7 +470,7 @@ func deposit_shards() -> void:
 
 
 func check_win() -> void:
-	if shards_deposited >= shards_to_win and sun_fuel >= fuel_max:
+	if shards_deposited >= shards_to_win and sun_is_full():
 		win()
 
 
@@ -572,7 +582,7 @@ func prompt_text() -> String:
 			return "Crumbling fuel..."
 		if player.held_kind() != "fuel":
 			return "Hold fuel (1-5) to use the hopper"
-		if sun_fuel >= fuel_max:
+		if sun_is_full():
 			return "The sun is full"
 	if target is SunCore and player.held_kind() != "shard":
 		return "Hold a shard (1-5) to put it in the sun"
