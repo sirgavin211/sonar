@@ -5,25 +5,16 @@
 [ext_resource type="Script" path="res://minimap.gd" id="3"]
 
 [sub_resource type="StyleBoxFlat" id="health_fill"]
+anti_aliasing = false
 bg_color = Color(0.45, 0.68, 0.22, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
 
 [sub_resource type="StyleBoxFlat" id="stamina_fill"]
+anti_aliasing = false
 bg_color = Color(0.3, 0.6, 0.95, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
 
 [sub_resource type="StyleBoxFlat" id="fuel_fill"]
+anti_aliasing = false
 bg_color = Color(0.95, 0.6, 0.15, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
 
 [node name="Hud" type="CanvasLayer"]
 script = ExtResource("1")
@@ -43,11 +34,11 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_top = 16.0
+offset_top = 8.0
 grow_horizontal = 2
 
 [node name="Text" type="Label" parent="Root/Goal"]
-custom_minimum_size = Vector2(460, 0)
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 autowrap_mode = 3
 
@@ -56,9 +47,9 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -16.0
-offset_top = 16.0
-offset_right = -16.0
+offset_left = -8.0
+offset_top = 8.0
+offset_right = -8.0
 grow_horizontal = 0
 
 [node name="Text" type="Label" parent="Root/RunInfo"]
@@ -68,12 +59,12 @@ layout_mode = 2
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 150.0
-offset_bottom = 150.0
+offset_top = 75.0
+offset_bottom = 75.0
 grow_horizontal = 2
 theme_override_colors/font_outline_color = Color(0.1, 0.1, 0.12, 1)
-theme_override_constants/outline_size = 8
-theme_override_font_sizes/font_size = 36
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
 
 [node name="Minimap" type="Panel" parent="Root"]
@@ -81,10 +72,10 @@ layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -196.0
-offset_right = 196.0
-offset_bottom = -16.0
+offset_left = 8.0
+offset_top = -98.0
+offset_right = 98.0
+offset_bottom = -8.0
 grow_vertical = 0
 script = ExtResource("3")
 
@@ -94,12 +85,12 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -130.0
-offset_bottom = -100.0
+offset_top = -65.0
+offset_bottom = -50.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_outline_color = Color(0.1, 0.1, 0.12, 1)
-theme_override_constants/outline_size = 6
+theme_override_constants/outline_size = 4
 horizontal_alignment = 1
 
 [node name="Hotbar" type="HBoxContainer" parent="Root"]
@@ -109,11 +100,11 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_top = -80.0
-offset_bottom = -16.0
+offset_top = -40.0
+offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 8
+theme_override_constants/separation = 4
 
 [node name="Stats" type="VBoxContainer" parent="Root"]
 layout_mode = 1
@@ -122,76 +113,76 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -316.0
-offset_top = -16.0
-offset_right = -16.0
-offset_bottom = -16.0
+offset_left = -158.0
+offset_top = -8.0
+offset_right = -8.0
+offset_bottom = -8.0
 grow_horizontal = 0
 grow_vertical = 0
-theme_override_constants/separation = 6
+theme_override_constants/separation = 3
 
 [node name="Resources" type="PanelContainer" parent="Root/Stats"]
 layout_mode = 2
 
 [node name="Grid" type="GridContainer" parent="Root/Stats/Resources"]
 layout_mode = 2
-theme_override_constants/h_separation = 20
+theme_override_constants/h_separation = 10
 columns = 4
 
 [node name="FoodName" type="Label" parent="Root/Stats/Resources/Grid"]
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 11
 text = "FOOD"
 
 [node name="Food" type="Label" parent="Root/Stats/Resources/Grid"]
-custom_minimum_size = Vector2(40, 0)
+custom_minimum_size = Vector2(20, 0)
 layout_mode = 2
 text = "0"
 horizontal_alignment = 2
 
 [node name="FuelName" type="Label" parent="Root/Stats/Resources/Grid"]
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 11
 text = "FUEL"
 
 [node name="Fuel" type="Label" parent="Root/Stats/Resources/Grid"]
-custom_minimum_size = Vector2(40, 0)
+custom_minimum_size = Vector2(20, 0)
 layout_mode = 2
 text = "0"
 horizontal_alignment = 2
 
 [node name="ShardsName" type="Label" parent="Root/Stats/Resources/Grid"]
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 11
 text = "SHARDS"
 
 [node name="Shards" type="Label" parent="Root/Stats/Resources/Grid"]
-custom_minimum_size = Vector2(40, 0)
+custom_minimum_size = Vector2(20, 0)
 layout_mode = 2
 text = "0"
 horizontal_alignment = 2
 
 [node name="InSunName" type="Label" parent="Root/Stats/Resources/Grid"]
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 11
 text = "IN SUN"
 
 [node name="InSun" type="Label" parent="Root/Stats/Resources/Grid"]
-custom_minimum_size = Vector2(40, 0)
+custom_minimum_size = Vector2(20, 0)
 layout_mode = 2
 text = "0"
 horizontal_alignment = 2
 
 [node name="StaminaBar" type="ProgressBar" parent="Root/Stats"]
-custom_minimum_size = Vector2(300, 28)
+custom_minimum_size = Vector2(150, 14)
 layout_mode = 2
 theme_override_styles/fill = SubResource("stamina_fill")
 show_percentage = false
@@ -201,15 +192,15 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
+offset_left = 5.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 11
 text = "STAMINA"
 vertical_alignment = 1
 
 [node name="FuelBar" type="ProgressBar" parent="Root/Stats"]
-custom_minimum_size = Vector2(300, 28)
+custom_minimum_size = Vector2(150, 14)
 layout_mode = 2
 theme_override_styles/fill = SubResource("fuel_fill")
 show_percentage = false
@@ -219,15 +210,15 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
+offset_left = 5.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 11
 text = "SUN FUEL"
 vertical_alignment = 1
 
 [node name="HealthBar" type="ProgressBar" parent="Root/Stats"]
-custom_minimum_size = Vector2(300, 28)
+custom_minimum_size = Vector2(150, 14)
 layout_mode = 2
 theme_override_styles/fill = SubResource("health_fill")
 show_percentage = false
@@ -237,10 +228,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
+offset_left = 5.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 11
 text = "HEALTH"
 vertical_alignment = 1
 
@@ -257,7 +248,7 @@ grow_vertical = 2
 
 [node name="Row" type="HBoxContainer" parent="Root/InventoryPanel"]
 layout_mode = 2
-theme_override_constants/separation = 32
+theme_override_constants/separation = 16
 
 [node name="Backpack" type="VBoxContainer" parent="Root/InventoryPanel/Row"]
 layout_mode = 2
@@ -288,7 +279,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_outline_color = Color(0.1, 0.1, 0.12, 1)
-theme_override_constants/outline_size = 8
-theme_override_font_sizes/font_size = 40
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
 vertical_alignment = 1

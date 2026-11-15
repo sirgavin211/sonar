@@ -10,6 +10,7 @@ const WaveScene := preload("res://sonar_wave.tscn")
 @export var max_health := 100.0
 @export var food_heal := 30.0
 @export var eat_time := 1.0  # seconds to finish one food
+@export var sprint_step_pitch := 1.35  # footsteps speed up while sprinting
 @export_group("Stamina")
 @export var max_stamina := 100.0
 @export var sprint_boost := 1.7  # speed multiplier while sprinting
@@ -38,9 +39,10 @@ var eat_tween: Tween
 
 @onready var gun: Node2D = $Gun
 @onready var muzzle: Marker2D = $Gun/Muzzle  # center of the orb in the sprite
-@onready var held: Node2D = $Gun/Muzzle/Held  # holds Shape (no art yet) or Icon
+@onready var held: Node2D = $Gun/Muzzle/Held
 @onready var crumbs: CPUParticles2D = $Gun/Muzzle/Crumbs
 @onready var health_bar: WorldBar = $HealthBar
+@onready var footsteps: AudioStreamPlayer = $Footsteps
 @onready var size: Vector2 = $CollisionShape2D.shape.size
 
 
@@ -52,10 +54,13 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if frozen or is_dead:
+		footsteps.stream_paused = true
 		return
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	velocity = direction * speed * sprint_multiplier(direction, delta)
+	var boost := sprint_multiplier(direction, delta)
+	velocity = direction * speed * boost
 	move_and_slide()
+	play_footsteps(boost > 1.0)
 	gun.rotation = aim_direction().angle()
 	cooldown_left -= delta
 	for i in 5:
@@ -89,14 +94,21 @@ func select(slot: int) -> void:
 	stop_eating()
 
 
-# The sonar orb is part of the character art; other items show as a shape in the hand.
+# The sonar orb is part of the character art; other items show their icon in the hand.
 func show_held() -> void:
 	var kind := held_kind()
 	held.visible = kind != "" and kind != "sonar"
 	if held.visible:
-		$Gun/Muzzle/Held/Icon.texture = Pickup.ICONS.get(kind)
-		$Gun/Muzzle/Held/Shape.visible = not Pickup.ICONS.has(kind)
-		$Gun/Muzzle/Held/Shape.color = Pickup.COLORS[kind]
+		$Gun/Muzzle/Held/Icon.texture = Pickup.icon_for(kind)
+
+
+# One long looping track: paused when standing still so it picks up where it left off.
+func play_footsteps(sprinting: bool) -> void:
+	var moving := get_real_velocity().length() > 1.0
+	if moving and not footsteps.playing:
+		footsteps.play()
+	footsteps.stream_paused = not moving
+	footsteps.pitch_scale = sprint_step_pitch if sprinting else 1.0
 
 
 # Drains stamina while sprinting and moving, regens otherwise.
@@ -121,6 +133,7 @@ func shoot() -> void:
 	var origin := muzzle.global_position
 	wave.setup(self, origin, (get_global_mouse_position() - origin).normalized())
 	get_parent().add_child(wave)
+	$SonarSound.play()
 	cooldown_left = fire_cooldown
 	shot_fired.emit(global_position)
 
@@ -128,6 +141,7 @@ func shoot() -> void:
 func pick_up(kind: String) -> bool:
 	if not backpack.add(kind):
 		return false
+	$CollectSound.play()
 	item_picked.emit(kind)
 	return true
 

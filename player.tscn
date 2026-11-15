@@ -5,6 +5,9 @@
 [ext_resource type="Script" path="res://flat_shape.gd" id="3"]
 [ext_resource type="Script" uid="uid://eryouooiwdne" path="res://world_bar.gd" id="4"]
 [ext_resource type="Texture2D" uid="uid://dcaw3v8n0ei2a" path="res://graphics/main_Character.png" id="5"]
+[ext_resource type="AudioStream" path="res://sound/Footsteps.mp3" id="6"]
+[ext_resource type="AudioStream" path="res://sound/SonarGSpot.mp3" id="7"]
+[ext_resource type="AudioStream" path="res://sound/CollectPts.mp3" id="8"]
 
 [sub_resource type="RectangleShape2D" id="shape"]
 size = Vector2(33.00763, 31.998722)
@@ -20,7 +23,7 @@ rotation = 4.714028
 [node name="Body" type="Sprite2D" parent="Gun" unique_id=1374416891]
 texture_filter = 1
 rotation = 1.5708
-scale = Vector2(1.5, 1.5)
+scale = Vector2(2, 2)
 texture = ExtResource("5")
 
 [node name="Muzzle" type="Marker2D" parent="Gun" unique_id=2082184291]
@@ -29,14 +32,9 @@ position = Vector2(3, 12)
 [node name="Held" type="Node2D" parent="Gun/Muzzle"]
 visible = false
 
-[node name="Shape" type="Node2D" parent="Gun/Muzzle/Held"]
-script = ExtResource("3")
-size = Vector2(12, 12)
-outline_width = 2.0
-corner_radius = 6.0
-
 [node name="Icon" type="Sprite2D" parent="Gun/Muzzle/Held"]
 texture_filter = 1
+scale = Vector2(2, 2)
 
 [node name="Crumbs" type="CPUParticles2D" parent="Gun/Muzzle"]
 emitting = false
@@ -65,8 +63,8 @@ offset_right = 60.0
 offset_bottom = -22.0
 theme_override_colors/font_color = Color(0.95, 0.93, 1, 1)
 theme_override_colors/font_outline_color = Color(0.17, 0.16, 0.2, 1)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 16
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
 text = "you"
 horizontal_alignment = 1
 
@@ -80,3 +78,16 @@ texture = ExtResource("2")
 texture_scale = 0.75
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1435160240]
+zoom = Vector2(0.5, 0.5)
+
+[node name="Footsteps" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6")
+volume_db = -6.0
+
+[node name="SonarSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("7")
+max_polyphony = 3
+
+[node name="CollectSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("8")
+max_polyphony = 3

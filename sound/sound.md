@@ -1,25 +1,25 @@
 # Sounds to find / make (Stanley)
 
-None of these are wired into the code yet. Drop the files in `sound/` and Gavin hooks them up. Each line says **what** and **when it plays**.
+Ticked ones are in the game. Drop new files in `sound/` and Gavin hooks them up. Each line says **what** and **when it plays**.
 
 ## Player
-- [ ] Footsteps, dirt: walking outside
+- [x] Footsteps: `Footsteps.mp3`, loops while walking (one track for inside and outside for now)
 - [ ] Footsteps, metal: walking inside the facility
 - [ ] Hurt: a Listener touches you
 - [ ] Death: health hits 0
-- [ ] Eat: F key, food heals
-- [ ] Sprint footsteps (faster)
+- [ ] Eat: 1 second crumble while holding food
+- [x] Sprint footsteps: same track played 1.35x faster
 - [ ] Out of breath: stamina runs dry
 
 ## Sonar
-- [ ] Gun fire: every shot (LMB)
+- [x] Gun fire: `SonarGSpot.mp3`, every shot
 - [ ] Echo ping: the wave front reaches a wall/rock and it lights up
 - [ ] Echo return: the bounce-back arc reaches the player (pitch by object size?)
 - [ ] Fade-out: wave reaches max range
 
 ## Items
-- [ ] Pickup food
-- [ ] Pickup fuel
+- [x] Pickup food / fuel / shard: `CollectPts.mp3` (one sound for all three for now)
+- [ ] Pickup fuel (own sound)
 - [ ] Pickup shard: **big and satisfying**, the dopamine hit
 - [ ] Backpack full: you can't pick something up
 
@@ -51,7 +51,7 @@ None of these are wired into the code yet. Drop the files in `sound/` and Gavin 
 - [ ] **JACKPOT fanfare**
 
 ## Game
-- [ ] Stage-up sting
+- [x] Stage-up sting: `Next Level.mp3`, at shards 2 and 4
 - [ ] Low fuel alarm
 - [ ] Low health heartbeat
 - [ ] Time's up

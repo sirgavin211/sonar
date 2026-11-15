@@ -30,7 +30,8 @@ func _draw() -> void:
 	var box := StyleBoxFlat.new()
 	box.bg_color = color
 	box.border_color = outline_color
-	box.set_border_width_all(int(outline_width))
+	box.anti_aliasing = false  # hard pixel edges, no soft blend
+	box.set_border_width_all(maxi(2, roundi(outline_width / 2.0) * 2))
 	box.set_corner_radius_all(int(corner_radius))
 	box.corner_detail = 16
 	draw_style_box(box, Rect2(-size / 2, size))

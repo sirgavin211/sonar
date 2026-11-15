@@ -3,7 +3,7 @@ extends CanvasLayer
 # zombs.io-style HUD: goal box, run info, minimap, hotbar, resource table, bars,
 # backpack grid, big messages. Layout lives in hud.tscn; reads state from main each frame.
 
-const SLOT_SIZE := Vector2(58, 58)
+const SLOT_SIZE := Vector2(28, 28)  # Minecraft-style: 16-20px art at 1x plus room for the digits
 
 var game: Node  # main.gd
 
@@ -39,34 +39,40 @@ func add_slots(container: Container, count: int) -> void:
 	for i in count:
 		var slot := Button.new()
 		slot.custom_minimum_size = SLOT_SIZE
+		slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER  # stay square in the taller hotbar row
 		# No focus, or Tab/Space would get eaten by the buttons.
 		slot.focus_mode = Control.FOCUS_NONE
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# Pixel-art icons: scaled up crisp, filling the slot like Minecraft's hotbar.
-		slot.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		slot.expand_icon = true
+		# Icons at their real 1x size so HUD pixels match the world's.
+		slot.expand_icon = false
 		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		slot.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
 		# Stack size in the bottom-right corner, same style as the slot numbers.
-		var stack := corner_label(slot, Control.PRESET_BOTTOM_RIGHT)
+		var stack := corner_label(slot, HORIZONTAL_ALIGNMENT_RIGHT, VERTICAL_ALIGNMENT_BOTTOM)
 		stack.name = "Count"
-		stack.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		container.add_child(slot)
 
 
 # Small 1-5 in the top-left of each hotbar slot, matching the number keys.
 func number_slots(container: Container) -> void:
 	for i in container.get_child_count():
-		corner_label(container.get_child(i), Control.PRESET_TOP_LEFT).text = str(i + 1)
+		corner_label(container.get_child(i), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_TOP).text = str(i + 1)
 
 
-# One shared look for the slot number and the stack count.
-func corner_label(slot: Button, corner: Control.LayoutPreset) -> Label:
+# One shared look for the slot number and the stack count. The label covers the
+# whole slot and aligns its text into a corner, so it never spills outside.
+func corner_label(slot: Button, across: HorizontalAlignment, down: VerticalAlignment) -> Label:
 	var label := Label.new()
-	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
+	# 1px dark edge, like Minecraft's text shadow, so digits read over the icon.
+	label.add_theme_color_override("font_outline_color", Color(0.07, 0.07, 0.09))
+	label.add_theme_constant_override("outline_size", 2)
+	label.horizontal_alignment = across
+	label.vertical_alignment = down
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(label)
-	label.set_anchors_and_offsets_preset(corner, Control.PRESET_MODE_MINSIZE, 4)
+	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 1)
 	return label
 
 
@@ -97,9 +103,7 @@ func fill_grid(grid: Container, inventory: Inventory) -> void:
 	for i in grid.get_child_count():
 		var slot: Button = grid.get_child(i)
 		var item = inventory.slots[i]
-		slot.icon = Pickup.ICONS.get(item.kind) if item else null
-		# Items without art yet show their name instead of an icon.
-		slot.text = item.kind if item and not slot.icon else ""
+		slot.icon = Pickup.icon_for(item.kind) if item else null
 		# Like Minecraft: no number for a single item.
 		slot.get_node("Count").text = str(item.count) if item and item.count > 1 else ""
 		if item:

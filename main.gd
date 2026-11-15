@@ -27,8 +27,8 @@ const BossScene := preload("res://boss.tscn")
 	preload("res://graphics/03-patchy-moss.png"),
 	preload("res://graphics/04-dense-moss.png"),
 ]
-@export var ground_tile_size := 48.0  # 16px art drawn 3x
-@export var moss_patch_size := 10.0  # tiles across one moss patch
+@export var ground_tile_size := 32.0  # 16px art drawn 2x = 1 art pixel per screen pixel
+@export var moss_patch_size := 14.0  # tiles across one moss patch
 @export var moss_levels: Array[float] = [-0.12, 0.0, 0.12]  # Perlin cutoffs: stone | sparse | patchy | dense
 @export var camp_stone_radius := 450.0  # the camp always sits in stone this far out
 @export_subgroup("Nature art")
@@ -53,7 +53,7 @@ const BossScene := preload("res://boss.tscn")
 @export var pebble_textures: Array[Texture2D] = [
 	preload("res://graphics/nature/16x16/rock-small-16.png"),
 ]
-@export var nature_scale := 3.0  # art pixels -> world, matches the ground tiles
+@export var nature_scale := 2.0  # art pixels -> world; 2x everywhere keeps one pixel grid
 @export var tree_color := Color(0.2, 0.4, 0.3)  # minimap color
 @export var stone_color := Color(0.45, 0.45, 0.5)
 @export_subgroup("")
@@ -389,7 +389,10 @@ func _on_item_picked(kind: String) -> void:
 	if kind != "shard":
 		return
 	shards_found += 1
+	var old_stage := stage
 	stage = mini(1 + int(shards_found / 2.0), 3)
+	if stage > old_stage:
+		$StageUpSound.play()
 	hud.toast("SHARD %d/%d  -  STAGE %d\nThey heard that." % [shards_found, shards_to_win, stage])
 	# Deferred: can't add physics bodies inside a pickup's collision callback.
 	spawn_listeners.call_deferred(spawn_per_shard[stage - 1])

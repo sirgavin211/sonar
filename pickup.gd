@@ -15,7 +15,26 @@ const ICONS := {
 	"shard": preload("res://graphics/shard.png"),
 }
 
+static var dot_icons := {}  # generated stand-ins, one per kind
+
 @export_enum("food", "fuel", "shard") var kind := "food"
+
+
+# The item's art, or a small outlined pixel dot in its color until art lands.
+static func icon_for(item_kind: String) -> Texture2D:
+	if ICONS.has(item_kind):
+		return ICONS[item_kind]
+	if not dot_icons.has(item_kind):
+		var image := Image.create(12, 12, false, Image.FORMAT_RGBA8)
+		for x in 12:
+			for y in 12:
+				var distance := Vector2(x + 0.5, y + 0.5).distance_to(Vector2(6, 6))
+				if distance <= 4.5:
+					image.set_pixel(x, y, COLORS[item_kind])
+				elif distance <= 5.8:
+					image.set_pixel(x, y, Color(0.17, 0.16, 0.2))
+		dot_icons[item_kind] = ImageTexture.create_from_image(image)
+	return dot_icons[item_kind]
 
 
 func _ready() -> void:

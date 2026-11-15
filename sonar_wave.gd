@@ -116,4 +116,4 @@ func _draw() -> void:
 				break
 			var ring_color := color
 			ring_color.a = fade * pow(bounce_dim, a.bounces) / (ring + 1)
-			draw_line(to_local(a.pos - a.dir * back), to_local(b.pos - b.dir * back), ring_color, 3.0)
+			draw_line(to_local(a.pos - a.dir * back), to_local(b.pos - b.dir * back), ring_color, 2.0)

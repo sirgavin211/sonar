@@ -21,7 +21,7 @@ extends StaticBody2D
 		texture = value
 		if is_node_ready():
 			apply()
-@export var texture_scale := 3.0:  # 3x matches the ground tiles' pixel size
+@export var texture_scale := 2.0:  # 2x everywhere keeps one pixel grid
 	set(value):
 		texture_scale = value
 		if is_node_ready():
