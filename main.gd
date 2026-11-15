@@ -13,10 +13,14 @@ const BossScene := preload("res://boss.tscn")
 @export_group("Map")
 @export var map_size := Vector2(4000, 4000)
 @export var tile := 100.0  # mountain block size
-@export var tree_count := 45
-@export var stone_count := 30
-@export var bush_count := 90
-@export var pebble_count := 70
+@export var rock_count := 50  # pixel stone blocks
+@export var rock_min_size := 40
+@export var rock_max_size := 120
+@export var tree_count := 90
+@export var stone_count := 60
+@export var bush_count := 180
+@export var pebble_count := 140
+@export var prop_gap := 12.0  # minimum space between any two props
 @export var food_count := 25
 @export var fuel_count := 40
 @export var scattered_shards := 5  # the last one comes from the boss
@@ -54,6 +58,10 @@ const BossScene := preload("res://boss.tscn")
 	preload("res://graphics/nature/16x16/rock-small-16.png"),
 ]
 @export var nature_scale := 2.0  # art pixels -> world; 2x everywhere keeps one pixel grid
+@export var stone_surface: Texture2D = preload("res://graphics/01-bare-rock.png")  # tiled over stone blocks + mountains
+@export var rock_tint := Color(1.7, 1.6, 1.5)  # lighter than the stone ground so blocks read as walls
+@export var mountain_tint := Color(1.3, 1.25, 1.2)
+@export var rock_color := Color(0.4, 0.38, 0.35)  # minimap color
 @export var tree_color := Color(0.2, 0.4, 0.3)  # minimap color
 @export var stone_color := Color(0.45, 0.45, 0.5)
 @export_subgroup("")
@@ -68,7 +76,8 @@ const BossScene := preload("res://boss.tscn")
 @export var fuel_drain := 0.4  # per second
 @export var interact_range := 80.0
 @export var ambience_db := -6.0  # loudness of the inside/outside ambience
-@export var ambience_fade := 0.5  # seconds to crossfade going through the door
+@export var ambience_fade_distance := 250.0  # factory hum fades out over this far past the camp walls
+@export var ambience_smoothing := 0.4  # seconds; smooths jumps (like respawning in camp)
 
 @export_group("Enemies")
 @export var start_listeners := 8
@@ -82,9 +91,12 @@ const BossScene := preload("res://boss.tscn")
 ]
 
 @export_group("Start rolls")
-@export var spin_ticks := 35  # names flashed per roll
-@export var spin_fastest := 0.03  # seconds per name at the start
-@export var spin_slowest := 0.45  # seconds per name right before it lands
+# When each click happens in sound/SpinClick.mp3 (seconds). Every click flips to a
+# new name; the last click lands on the result. Found with ffmpeg silencedetect.
+@export var spin_clicks: Array[float] = [
+	0.047, 0.128, 0.207, 0.297, 0.389, 0.474, 0.561, 0.642, 0.72, 0.81, 0.904,
+	0.988, 1.074, 1.154, 1.232, 1.323, 1.439, 1.594, 1.766, 1.932, 2.123, 2.329,
+]
 # Mods are added to player stats. Weights don't need to sum to 100.
 @export var abilities: Array[Dictionary] = [
 	{"name": "Nothing. Unlucky.", "weight": 60, "tier": "none", "mods": {}},
@@ -111,7 +123,7 @@ var player: Player
 var camp: Camp
 var hud: Hud
 var darkness: CanvasModulate
-var rock_rects: Array[Rect2] = []
+var rock_rects: Array[Rect2] = []  # footprint of every placed prop (trees, stones, bushes, pebbles)
 
 var started := false
 var game_over := false
@@ -172,6 +184,7 @@ func build_map() -> void:
 	add_child(ground)
 	build_mountains()
 	# Trees block at the trunk (canopy hangs over you); stones at most of their body.
+	scatter_rocks()
 	scatter_solid(tree_textures, tree_count, 0.45, tree_color, 1)
 	scatter_solid(stone_textures, stone_count, 0.75, stone_color, 0)
 	scatter_clutter(bush_textures, bush_count)
@@ -191,7 +204,7 @@ func build_mountains() -> void:
 		var along := (i + 0.5) * tile
 		for pos in [Vector2(along, tile / 2), Vector2(along, map_size.y - tile / 2),
 				Vector2(tile / 2, along), Vector2(map_size.x - tile / 2, along)]:
-			spawn_wall(pos, Vector2(tile, tile), mountain_color)
+			spawn_stone(pos, Vector2(tile, tile), mountain_color, mountain_tint)
 
 
 func spawn_wall(pos: Vector2, size: Vector2, color: Color, texture: Texture2D = null) -> Wall:
@@ -205,29 +218,63 @@ func spawn_wall(pos: Vector2, size: Vector2, color: Color, texture: Texture2D = 
 	return wall
 
 
+# Stone blocks of random size; even sizes keep their edges on the pixel grid.
+func scatter_rocks() -> void:
+	for i in rock_count:
+		var size := Vector2(randi_range(rock_min_size / 2, rock_max_size / 2), randi_range(rock_min_size / 2, rock_max_size / 2)) * 2
+		var spot = claim_free_spot(size)
+		if spot != null:
+			spawn_stone(spot, size, rock_color, rock_tint)
+
+
+func spawn_stone(pos: Vector2, size: Vector2, color: Color, tint: Color) -> Wall:
+	var wall := spawn_wall(pos, size, color)
+	wall.surface = stone_surface
+	wall.surface_tint = tint
+	return wall
+
+
 # collider_ratio: how much of the art blocks movement. layer 1 draws over the player.
 func scatter_solid(textures: Array[Texture2D], count: int, collider_ratio: float, color: Color, layer: int) -> void:
 	for i in count:
 		var texture: Texture2D = textures.pick_random()
 		var art := texture.get_size() * nature_scale
-		var pos := random_open_point()
-		var wall := spawn_wall(pos, art * collider_ratio, color, texture)
+		var spot = claim_free_spot(art)
+		if spot == null:
+			continue
+		var wall := spawn_wall(spot, art * collider_ratio, color, texture)
 		wall.z_index = layer
 		wall.get_node("Sprite").flip_h = randf() < 0.5
-		rock_rects.append(Rect2(pos - art / 2, art))
 
 
 # Walk-over ground clutter: just art, no collision or sonar echo.
 func scatter_clutter(textures: Array[Texture2D], count: int) -> void:
 	for i in count:
+		var texture: Texture2D = textures.pick_random()
+		var spot = claim_free_spot(texture.get_size() * nature_scale)
+		if spot == null:
+			continue
 		var sprite := Sprite2D.new()
-		sprite.texture = textures.pick_random()
+		sprite.texture = texture
 		sprite.scale = Vector2.ONE * nature_scale
 		sprite.flip_h = randf() < 0.5
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		sprite.z_index = -1
-		sprite.position = random_open_point()
+		sprite.position = spot
 		add_child(sprite)
+
+
+# A spot where a prop this size (plus prop_gap) overlaps no other prop; reserves it.
+# Returns null if the map is too crowded to fit it, so that prop is just skipped.
+func claim_free_spot(size: Vector2):
+	for attempt in 40:
+		var point := random_open_point()
+		var footprint := Rect2(point - size / 2, size)
+		if rock_rects.any(func(rect: Rect2): return rect.intersects(footprint.grow(prop_gap))):
+			continue
+		rock_rects.append(footprint)
+		return point
+	return null
 
 
 func spawn_pickup(kind: String, pos: Vector2) -> void:
@@ -262,24 +309,30 @@ func run_start_rolls() -> void:
 		await get_tree().process_frame
 
 
-# Slot machine: flashes names super fast, brakes hard at the end, and the last
-# name it slows onto is the result.
+# Slot machine synced to the wheel-click sound: a new name on every click, fast at
+# first then slowing with the wheel, landing on the result at the last click.
 func spin(title: String, options: Array, result: Dictionary) -> void:
+	$SpinClick.play()
+	var started_at := Time.get_ticks_msec()
 	var shown := ""
-	for i in spin_ticks:
-		var progress := i / float(spin_ticks - 1)  # 0 at the start .. 1 on the last tick
-		var name: String = result.name if i == spin_ticks - 1 else different_name(options, shown)
+	for i in spin_clicks.size():
+		# Wait until this click's moment in the sound (measured from the start, so no drift).
+		var wait := spin_clicks[i] - (Time.get_ticks_msec() - started_at) / 1000.0
+		if wait > 0.0:
+			await get_tree().create_timer(wait).timeout
+		var last := spin_clicks.size() - 1
+		# The name before the last click can't be the result, or the final click wouldn't visibly land.
+		var avoid: Array = [shown, result.name] if i == last - 1 else [shown]
+		var name: String = result.name if i == last else different_name(options, avoid)
 		hud.show_message("%s\n\n%s" % [title, name])
 		shown = name
-		# Cubed so it stays fast for most of the spin, then slows down sharply at the end.
-		await get_tree().create_timer(lerpf(spin_fastest, spin_slowest, progress * progress * progress)).timeout
 	hud.show_message("%s\n\n%s\n%s" % [title, result.name, tier_flavor[result.tier]])
 	await get_tree().create_timer(1.5).timeout
 
 
-# Any option except the one on screen, so every tick visibly changes.
-func different_name(options: Array, current: String) -> String:
-	var others := options.filter(func(option): return option.name != current)
+# Any option except the given names, so every click visibly changes.
+func different_name(options: Array, avoid: Array) -> String:
+	var others := options.filter(func(option): return not option.name in avoid)
 	return others.pick_random().name
 
 
@@ -326,12 +379,15 @@ func _process(delta: float) -> void:
 			spawn_boss()
 
 
-# Both loops always run; walking through the door crossfades between them.
+# Both loops always run. The factory hum fades out as you walk away from the camp
+# and back in as you return; the outdoor ambience does the opposite.
 func update_ambience(delta: float) -> void:
-	var target := 1.0 if camp.contains(player.global_position) else 0.0
-	inside_mix = move_toward(inside_mix, target, delta / ambience_fade)
-	$InsideAmbience.volume_db = ambience_db + linear_to_db(inside_mix)
-	$OutsideAmbience.volume_db = ambience_db + linear_to_db(1.0 - inside_mix)
+	var away := camp.distance_from_floor(player.global_position)
+	var target := 1.0 - clampf(away / ambience_fade_distance, 0.0, 1.0)
+	inside_mix = move_toward(inside_mix, target, delta / ambience_smoothing)
+	# Equal-power crossfade (sqrt), so it doesn't dip in loudness halfway.
+	$InsideAmbience.volume_db = ambience_db + linear_to_db(sqrt(inside_mix))
+	$OutsideAmbience.volume_db = ambience_db + linear_to_db(sqrt(1.0 - inside_mix))
 
 
 func _unhandled_input(event: InputEvent) -> void:

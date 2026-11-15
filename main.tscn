@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1"]
 [ext_resource type="AudioStream" path="res://sound/Next Level.mp3" id="2"]
 [ext_resource type="AudioStream" path="res://sound/InterriorAmbience.mp3" id="3"]
 [ext_resource type="AudioStream" path="res://sound/OutsideAmbience.mp3" id="4"]
+[ext_resource type="AudioStream" path="res://sound/SpinClick.mp3" id="5"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1")
@@ -20,3 +21,6 @@ autoplay = true
 stream = ExtResource("4")
 volume_db = -80.0
 autoplay = true
+
+[node name="SpinClick" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5")

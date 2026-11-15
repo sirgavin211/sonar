@@ -46,7 +46,7 @@ Ticked ones are in the game. Drop new files in `sound/` and Gavin hooks them up.
 - [ ] Final shard drop
 
 ## Start rolls
-- [ ] Slot spin loop + tick
+- [x] Slot spin: `SpinClick.mp3` (wheel click slowing down); every click flips the name, the last click lands on the result
 - [ ] Bad result
 - [ ] Good result
 - [ ] **JACKPOT fanfare**
