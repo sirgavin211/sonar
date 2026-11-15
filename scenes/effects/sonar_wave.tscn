@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/effects/sonar_wave.gd" id="1"]
+
+[sub_resource type="CanvasItemMaterial" id="unshaded"]
+light_mode = 1
+
+[node name="SonarWave" type="Node2D"]
+material = SubResource("unshaded")
+script = ExtResource("1")

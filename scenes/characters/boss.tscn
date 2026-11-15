@@ -1,0 +1,27 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/listener.tscn" id="1"]
+
+[sub_resource type="RectangleShape2D" id="shape"]
+size = Vector2(80, 80)
+
+[node name="Boss" instance=ExtResource("1")]
+max_health = 40
+speed = 160.0
+contact_damage = 40.0
+sight_radius = 100000.0
+
+[node name="Body" parent="." index="0"]
+self_modulate = Color(1, 0.45, 0.45, 1)
+scale = Vector2(4, 4)
+
+[node name="CollisionShape2D" parent="." index="1"]
+shape = SubResource("shape")
+
+[node name="HealthBar" parent="." index="2"]
+position = Vector2(0, 54)
+width = 90.0
+height = 8.0
+
+[node name="EchoGlow" parent="." index="3"]
+texture_scale = 1.875

@@ -4,7 +4,7 @@ extends SceneTree
 
 
 func _initialize() -> void:
-	var main = load("res://main.tscn").instantiate()
+	var main = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame
 	main.ability = main.abilities[0]
@@ -21,7 +21,7 @@ func _initialize() -> void:
 	await physics_frame
 	var waves := []
 	for aim in [Vector2.RIGHT, Vector2.LEFT]:
-		var wave: SonarWave = load("res://sonar_wave.tscn").instantiate()
+		var wave: SonarWave = load("res://scenes/effects/sonar_wave.tscn").instantiate()
 		wave.setup(main.player, main.player.global_position, aim)
 		main.add_child(wave)
 		waves.append(wave)
@@ -87,7 +87,7 @@ func _initialize() -> void:
 
 
 func spawn_listener(main, pos: Vector2) -> Listener:
-	var listener: Listener = load("res://listener.tscn").instantiate()
+	var listener: Listener = load("res://scenes/characters/listener.tscn").instantiate()
 	listener.target = main.player
 	listener.max_health = 99
 	listener.speed = 0.0
