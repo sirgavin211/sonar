@@ -1,11 +1,25 @@
+@tool
 class_name Ground
 extends Node2D
-# Flat ground with a grid, zombs.io style. Main sets size/colors from its exports.
+# Flat floor with a grid: the zombs.io-style map ground (main sets it from its exports)
+# and the factory's metal plates in camp.tscn. Draws from (0, 0) to size.
 
-var size := Vector2(4000, 4000)
-var color := Color(0.33, 0.4, 0.28)
-var line_color := Color(0.29, 0.35, 0.24)
-var cell := 48.0
+@export var size := Vector2(4000, 4000):
+	set(value):
+		size = value
+		queue_redraw()
+@export var color := Color(0.33, 0.4, 0.28):
+	set(value):
+		color = value
+		queue_redraw()
+@export var line_color := Color(0.29, 0.35, 0.24):
+	set(value):
+		line_color = value
+		queue_redraw()
+@export var cell := 48.0:
+	set(value):
+		cell = maxf(value, 4.0)
+		queue_redraw()
 
 
 func _draw() -> void:

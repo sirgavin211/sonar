@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bsfbgl8gr2dcs" path="res://player.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://28rffse78our" path="res://light_texture.tres" id="2"]
+[ext_resource type="Script" path="res://flat_shape.gd" id="3"]
 [ext_resource type="Script" uid="uid://eryouooiwdne" path="res://world_bar.gd" id="4"]
 [ext_resource type="Texture2D" uid="uid://dcaw3v8n0ei2a" path="res://graphics/main_Character.png" id="5"]
 
@@ -24,6 +25,27 @@ texture = ExtResource("5")
 
 [node name="Muzzle" type="Marker2D" parent="Gun" unique_id=2082184291]
 position = Vector2(3, 12)
+
+[node name="Held" type="Node2D" parent="Gun/Muzzle"]
+visible = false
+script = ExtResource("3")
+size = Vector2(12, 12)
+outline_width = 2.0
+corner_radius = 6.0
+
+[node name="Crumbs" type="CPUParticles2D" parent="Gun/Muzzle"]
+emitting = false
+amount = 14
+lifetime = 0.5
+local_coords = false
+direction = Vector2(0, 1)
+spread = 70.0
+gravity = Vector2(0, 120)
+initial_velocity_min = 15.0
+initial_velocity_max = 40.0
+scale_amount_min = 2.0
+scale_amount_max = 3.0
+color = Color(0.55, 0.8, 0.35, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=325329434]
 position = Vector2(-0.4956491, -3.986549)

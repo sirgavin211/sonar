@@ -1,8 +1,9 @@
 class_name Pickup
 extends Area2D
 
-# Also used by the HUD to color backpack slots.
+# Item colors, also used by the HUD slots and the held item. Sonar isn't a pickup, it's the starting tool.
 const COLORS := {
+	"sonar": Color(0.4, 0.9, 1.0),
 	"food": Color(0.3, 0.9, 0.3),
 	"fuel": Color(1.0, 0.5, 0.1),
 	"shard": Color(1.0, 0.95, 0.4),

@@ -1,8 +1,8 @@
 class_name SunCore
 extends StaticBody2D
-# The unfinished artificial sun. Glows with fuel, grows with shards.
+# The unfinished artificial sun. Glows with fuel (fed through the hopper), grows with shards.
 
-@export var prompt := "E: feed the sun"
+@export var prompt := "E: put shards in the sun"
 @export var cold := Color(0.3, 0.15, 0.05)
 @export var hot := Color(1.0, 0.9, 0.4)
 

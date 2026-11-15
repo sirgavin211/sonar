@@ -31,6 +31,7 @@ func _ready() -> void:
 	add_slots(backpack_grid, 15)
 	# Hotbar mirrors the backpack's first row.
 	add_slots(hotbar, 5)
+	number_slots(hotbar)
 
 
 # Identical display-only slots, so they're made here instead of copy-pasted in hud.tscn.
@@ -42,6 +43,17 @@ func add_slots(container: Container, count: int) -> void:
 		slot.focus_mode = Control.FOCUS_NONE
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		container.add_child(slot)
+
+
+# Small 1-5 in the corner of each hotbar slot, matching the number keys.
+func number_slots(container: Container) -> void:
+	for i in container.get_child_count():
+		var number := Label.new()
+		number.text = str(i + 1)
+		number.position = Vector2(5, 1)
+		number.add_theme_font_size_override("font_size", 12)
+		number.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+		container.get_child(i).add_child(number)
 
 
 func _process(_delta: float) -> void:
@@ -61,6 +73,8 @@ func _process(_delta: float) -> void:
 	run_info.get_parent().visible = run_info.text != ""
 	prompt.text = game.prompt_text()
 	fill_grid(hotbar, player.backpack)
+	for i in hotbar.get_child_count():
+		hotbar.get_child(i).theme_type_variation = &"HotbarSelected" if i == player.selected else &""
 	if inventory_panel.visible:
 		fill_grid(backpack_grid, player.backpack)
 

@@ -1,0 +1,53 @@
+class_name Hopper
+extends StaticBody2D
+# Feeds the sun one piece of fuel at a time: each piece crumbles into the mouth
+# over crumble_time, then `crumbled` fires and main adds its fuel to the sun.
+# Main stops it when you run out of fuel, switch items, walk off, or the sun is full.
+
+signal crumbled
+
+@export var prompt := "E: crumble fuel into the hopper"
+@export var crumble_time := 1.0
+
+var feeding := false
+var time_left := 0.0
+var shrink: Tween
+
+@onready var piece: FlatShape = $Piece
+@onready var crumbs: CPUParticles2D = $Crumbs
+
+
+func start() -> void:
+	if feeding:
+		return
+	feeding = true
+	next_piece()
+
+
+func stop() -> void:
+	feeding = false
+	piece.hide()
+	crumbs.emitting = false
+	if shrink:
+		shrink.kill()
+
+
+func next_piece() -> void:
+	time_left = crumble_time
+	piece.show()
+	piece.scale = Vector2.ONE
+	crumbs.emitting = true
+	if shrink:
+		shrink.kill()
+	shrink = create_tween()
+	shrink.tween_property(piece, "scale", Vector2.ZERO, crumble_time)
+
+
+func _process(delta: float) -> void:
+	if not feeding:
+		return
+	time_left -= delta
+	if time_left <= 0.0:
+		crumbled.emit()
+		if feeding:
+			next_piece()

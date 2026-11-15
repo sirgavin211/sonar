@@ -9,6 +9,7 @@ const WaveScene := preload("res://sonar_wave.tscn")
 
 @export var max_health := 100.0
 @export var food_heal := 30.0
+@export var eat_time := 1.0  # seconds to finish one food
 @export_group("Stamina")
 @export var max_stamina := 100.0
 @export var sprint_boost := 1.7  # speed multiplier while sprinting
@@ -31,9 +32,14 @@ var backpack := Inventory.new(15)  # 3 rows x 5
 var frozen := true  # main unfreezes after the start rolls
 var is_dead := false
 var cooldown_left := 0.0
+var selected := 0  # hotbar slot 0-4, picked with number keys
+var eat_left := 0.0  # > 0 while eating
+var eat_tween: Tween
 
 @onready var gun: Node2D = $Gun
 @onready var muzzle: Marker2D = $Gun/Muzzle  # center of the orb in the sprite
+@onready var held: FlatShape = $Gun/Muzzle/Held
+@onready var crumbs: CPUParticles2D = $Gun/Muzzle/Crumbs
 @onready var health_bar: WorldBar = $HealthBar
 @onready var size: Vector2 = $CollisionShape2D.shape.size
 
@@ -41,6 +47,7 @@ var cooldown_left := 0.0
 func _ready() -> void:
 	health = max_health
 	stamina = max_stamina
+	backpack.add("sonar")  # always starts in slot 1
 
 
 func _physics_process(delta: float) -> void:
@@ -51,8 +58,43 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	gun.rotation = aim_direction().angle()
 	cooldown_left -= delta
-	if Input.is_action_pressed("shoot") and cooldown_left <= 0.0:
+	for i in 5:
+		if Input.is_action_just_pressed("slot_%d" % (i + 1)):
+			select(i)
+	show_held()
+	use_held(delta)
+
+
+# Left click uses whatever is in the selected slot.
+func use_held(delta: float) -> void:
+	if eat_left > 0.0:
+		eat_left -= delta
+		if eat_left <= 0.0:
+			finish_eating()
+		return
+	var kind := held_kind()
+	if kind == "sonar" and Input.is_action_pressed("shoot") and cooldown_left <= 0.0:
 		shoot()
+	elif kind == "food" and Input.is_action_just_pressed("shoot") and health < max_health:
+		start_eating()
+
+
+func held_kind() -> String:
+	var item = backpack.slots[selected]
+	return item.kind if item else ""
+
+
+func select(slot: int) -> void:
+	selected = slot
+	stop_eating()
+
+
+# The sonar orb is part of the character art; other items show as a shape in the hand.
+func show_held() -> void:
+	var kind := held_kind()
+	held.visible = kind != "" and kind != "sonar"
+	if held.visible:
+		held.color = Pickup.COLORS[kind]
 
 
 # Drains stamina while sprinting and moving, regens otherwise.
@@ -88,10 +130,28 @@ func pick_up(kind: String) -> bool:
 	return true
 
 
-func eat() -> void:
-	if health < max_health and backpack.remove("food"):
+# Food shrinks in the hand while crumbs fall, then heals.
+func start_eating() -> void:
+	eat_left = eat_time
+	crumbs.emitting = true
+	held.scale = Vector2.ONE
+	eat_tween = create_tween()
+	eat_tween.tween_property(held, "scale", Vector2.ZERO, eat_time)
+
+
+func finish_eating() -> void:
+	stop_eating()
+	if backpack.remove("food"):
 		health = minf(health + food_heal, max_health)
 		health_bar.ratio = health / max_health
+
+
+func stop_eating() -> void:
+	if eat_tween:
+		eat_tween.kill()
+	eat_left = 0.0
+	crumbs.emitting = false
+	held.scale = Vector2.ONE
 
 
 func take_damage(amount: float) -> void:

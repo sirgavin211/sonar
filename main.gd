@@ -104,6 +104,8 @@ func _ready() -> void:
 	player.shot_fired.connect(_on_shot_fired)
 	player.item_picked.connect(_on_item_picked)
 
+	camp.hopper.crumbled.connect(_on_hopper_crumbled)
+
 	hud = HudScene.instantiate()
 	hud.game = self
 	add_child(hud)
@@ -222,6 +224,8 @@ func _process(delta: float) -> void:
 	if not started or game_over:
 		return
 	sun_fuel -= fuel_drain * delta
+	if camp.hopper.feeding and not can_use_hopper():
+		camp.hopper.stop()
 	camp.sun_core.refresh(sun_fuel / fuel_max, shards_deposited, shards_to_win)
 	if sun_fuel <= 0.0:
 		lose("The sun went cold.")
@@ -251,8 +255,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			close_inventory()
 		else:
 			interact()
-	elif event.is_action_pressed("eat"):
-		player.eat()
 
 
 func open_inventory() -> void:
@@ -265,9 +267,18 @@ func close_inventory() -> void:
 	player.frozen = false
 
 
+# Fuel goes in through the hopper, shards straight into the sun; both from your hand.
 func interact() -> void:
-	if nearest_interactable() is SunCore:
-		feed_sun()
+	var target := nearest_interactable()
+	if target is Hopper and can_use_hopper():
+		target.start()
+	elif target is SunCore and player.held_kind() == "shard":
+		deposit_shards()
+
+
+# Holding fuel, standing at the hopper, and the sun still has room.
+func can_use_hopper() -> bool:
+	return player.held_kind() == "fuel" and nearest_interactable() is Hopper and sun_fuel < fuel_max
 
 
 func nearest_interactable() -> Node2D:
@@ -282,16 +293,21 @@ func nearest_interactable() -> Node2D:
 
 
 # Only takes the fuel the sun needs; extra stays in the backpack.
-func feed_sun() -> void:
-	var needed := ceili((fuel_max - sun_fuel) / fuel_per_item)
-	var fuel := mini(player.backpack.count("fuel"), needed)
-	player.backpack.remove("fuel", fuel)
-	sun_fuel = minf(sun_fuel + fuel * fuel_per_item, fuel_max)
+func _on_hopper_crumbled() -> void:
+	if player.backpack.remove("fuel"):
+		sun_fuel = minf(sun_fuel + fuel_per_item, fuel_max)
+		check_win()
+
+
+func deposit_shards() -> void:
 	var shards := player.backpack.count("shard")
 	player.backpack.remove("shard", shards)
 	shards_deposited += shards
-	if shards > 0:
-		hud.toast("SHARDS IN THE SUN: %d/%d" % [shards_deposited, shards_to_win])
+	hud.toast("SHARDS IN THE SUN: %d/%d" % [shards_deposited, shards_to_win])
+	check_win()
+
+
+func check_win() -> void:
 	if shards_deposited >= shards_to_win and sun_fuel >= fuel_max:
 		win()
 
@@ -381,8 +397,8 @@ func goal_text() -> String:
 		return "THE BOSS ARRIVES IN %d.\nKill it for the final shard." % ceili(boss_timer)
 	if shards_found >= scattered_shards and shards_found < shards_to_win:
 		return "The boss is out there. Kill it for the final shard."
-	return "Find sun shards and fuel in the dark, then bring them to the Sun Core in camp.\n" \
-		+ "WASD move  -  Left Click sonar  -  Shift sprint  -  Tab backpack  -  E interact  -  F eat"
+	return "Find sun shards and fuel in the dark. Fuel goes in the hopper, shards in the Sun Core.\n" \
+		+ "WASD move  -  1-5 pick item  -  Left Click use (sonar / eat)  -  Shift sprint  -  Tab backpack  -  E interact"
 
 
 func run_text() -> String:
@@ -396,4 +412,13 @@ func prompt_text() -> String:
 	if not started or game_over or hud.is_inventory_open():
 		return ""
 	var target := nearest_interactable()
+	if target is Hopper:
+		if camp.hopper.feeding:
+			return "Crumbling fuel..."
+		if player.held_kind() != "fuel":
+			return "Hold fuel (1-5) to use the hopper"
+		if sun_fuel >= fuel_max:
+			return "The sun is full"
+	if target is SunCore and player.held_kind() != "shard":
+		return "Hold a shard (1-5) to put it in the sun"
 	return target.prompt if target else ""
