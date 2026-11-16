@@ -1,0 +1,17 @@
+[    5061ms] [WARNING] Unrecognized feature: 'monetization'. @ https://static.itch.io/lib.min.js?1794782461:2
+[    5061ms] [WARNING] Unrecognized feature: 'xr'. @ https://static.itch.io/lib.min.js?1794782461:2
+[    5061ms] [WARNING] Allow attribute will take precedence over 'allowfullscreen'. @ https://static.itch.io/lib.min.js?1794782461:2
+[    6692ms] [LOG] Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org @ https://html-classic.itch.zone/html/20567499/web/index.js:452
+[    7950ms] [LOG] OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL @ https://html-classic.itch.zone/html/20567499/web/index.js:452
+[    8179ms] [LOG] Build configuration: Emscripten 4.0.20, single-threaded, no GDExtension support. @ https://html-classic.itch.zone/html/20567499/web/index.js:452
+[  153573ms] [WARNING] Unrecognized feature: 'monetization'. @ https://static.itch.io/lib.min.js?1794782461:2
+[  153574ms] [WARNING] Unrecognized feature: 'xr'. @ https://static.itch.io/lib.min.js?1794782461:2
+[  153574ms] [WARNING] Allow attribute will take precedence over 'allowfullscreen'. @ https://static.itch.io/lib.min.js?1794782461:2
+[  154136ms] [LOG] Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org @ https://html-classic.itch.zone/html/20567499/web/index.js:452
+[  154289ms] [LOG] OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL @ https://html-classic.itch.zone/html/20567499/web/index.js:452
+[  154456ms] [LOG] Build configuration: Emscripten 4.0.20, single-threaded, no GDExtension support. @ https://html-classic.itch.zone/html/20567499/web/index.js:452
+[  154562ms] [WARNING] Failed to execute 'requestFullscreen' on 'Element': API can only be initiated by a user gesture. @ https://html-classic.itch.zone/html/20567499/web/index.html?v=1794782707:1
+[  437579ms] [WARNING] WebGL: INVALID_OPERATION: bindBuffer: element array buffers can not be bound to a different target @ https://html-classic.itch.zone/html/20567499/web/index.js:1
+[  437580ms] [WARNING] WebGL: INVALID_OPERATION: bufferSubData: no buffer @ https://html-classic.itch.zone/html/20567499/web/index.js:1
+[  437580ms] [WARNING] WebGL: INVALID_OPERATION: bindBuffer: element array buffers can not be bound to a different target @ https://html-classic.itch.zone/html/20567499/web/index.js:1
+[  437580ms] [WARNING] WebGL: INVALID_OPERATION: bufferSubData: no buffer @ https://html-classic.itch.zone/html/20567499/web/index.js:1

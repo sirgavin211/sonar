@@ -620,7 +620,7 @@ func win() -> void:
 	game_over = true
 	player.frozen = true
 	get_tree().call_group("listeners", "queue_free")
-	var tween := create_tween().set_parallel()
+	var tween := create_tween().set_parallel().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)  # interpolated nodes move on physics ticks
 	tween.tween_property(camp.sun_core, "position:y", -1500.0, 5.0).set_trans(Tween.TRANS_SINE)
 	tween.tween_property(camp.sun_core.glow, "energy", 3.0, 5.0)
 	tween.tween_property(darkness, "color", Color.WHITE, 5.0)
@@ -670,11 +670,11 @@ func goal_text() -> String:
 			shown_step = quest_step
 			shown_text = quests[quest_step].text.format({"fuel": slot_key("fuel"), "shard": slot_key("shard")})
 		return shown_text
+	if boss_beaten and not game_over:
+		return "Make sure to fully fill the Sun's fuel to ignite it in space.\nBring all %d shards to the Sun." % shards_to_win
 	var text := stage_name()
 	if boss_timer > 0.0:
 		text += "\nThe boss arrives in %d" % ceili(boss_timer)
-	elif boss_beaten and not game_over:
-		text += "\nBring all %d shards to the Sun." % shards_to_win
 	return text
 
 

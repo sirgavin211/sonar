@@ -27,7 +27,10 @@ func flash() -> void:
 	if tween:
 		tween.kill()
 	enabled = true
+	add_to_group("lit_glows")  # the minimap only walks lit glows, not the whole map
 	energy = flash_energy
 	tween = create_tween()
 	tween.tween_property(self, "energy", 0.0, fade_time)
-	tween.tween_callback(func(): enabled = false)
+	tween.tween_callback(func():
+		enabled = false
+		remove_from_group("lit_glows"))

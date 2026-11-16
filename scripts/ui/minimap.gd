@@ -16,17 +16,14 @@ func _process(_delta: float) -> void:
 
 func _draw() -> void:
 	var scale_to_map: Vector2 = size / game.map_size
-	for node in get_tree().get_nodes_in_group("echoable"):
-		draw_pinged(node, scale_to_map)
+	for glow in get_tree().get_nodes_in_group("lit_glows"):
+		draw_pinged(glow.get_parent(), glow, scale_to_map)
 	draw_rect(Rect2(game.camp.position * scale_to_map - Vector2(2, 2), Vector2(4, 4)), camp_color)
 	draw_rect(Rect2(game.player.position * scale_to_map - Vector2(1, 1), Vector2(3, 3)), player_color)
 
 
 # Walls draw at their real size, items as dots; both fade as the glow does.
-func draw_pinged(node: Node2D, scale_to_map: Vector2) -> void:
-	var glow: EchoGlow = node.get_node("EchoGlow")
-	if not glow.enabled:
-		return
+func draw_pinged(node: Node2D, glow: EchoGlow, scale_to_map: Vector2) -> void:
 	var at := node.global_position * scale_to_map
 	if node is Wall:
 		var color: Color = node.color

@@ -1,0 +1,54 @@
+- generic [ref=e1]:
+  - list:
+    - listitem:
+      - link "Follow sirgavin211" [ref=e2] [cursor=pointer]:
+        - /url: https://itch.io/login?intent=follow_user&return_to=https%3A%2F%2Fsirgavin211.itch.io%2Fsonar
+    - listitem:
+      - link "Add To Collection" [ref=e7] [cursor=pointer]:
+        - /url: https://itch.io/login?intent=add_to_collection&return_to=https%3A%2F%2Fsirgavin211.itch.io%2Fsonar
+    - listitem:
+      - link "Related games" [ref=e10] [cursor=pointer]:
+        - /url: https://itch.io/games-like/5375436/sonar
+  - generic [ref=e15]:
+    - generic [ref=e16]:
+      - iframe [active] [ref=e56]:
+        - generic [ref=f1e1]:
+          - generic [ref=f1e2]: Your browser does not support the canvas tag.
+          - progressbar [ref=f1e4]
+      - generic [ref=e25]:
+        - paragraph [ref=e27]: Travel across the map shooting sonar rays to light up the path ahead of you. Keep in mind, to collect fuel and shard artifacts as you go. Sonar rays will be able to bounce off walls and light up surrounding areas even further! Remember to place fuel artifacts inside the hopper at your base so that your light wont vanish forever. If your ever low on health, make sure to eat some of the food you collected. However, BEWARE of the listeners that lurk the shadows of this new world. 3 shards is all it takes to bring back THE SUN.
+        - generic [ref=e28]:
+          - link "More information" [ref=e30] [cursor=pointer]:
+            - /url: javascript:void(0)
+          - text: 
+        - generic [ref=e33]:
+          - heading "Leave a comment" [level=2] [ref=e34]
+          - paragraph [ref=e35]:
+            - link "Log in with itch.io" [ref=e36] [cursor=pointer]:
+              - /url: https://itch.io/login?return_to=https%3A%2F%2Fsirgavin211.itch.io%2Fsonar
+            - text: to leave a comment.
+    - generic [ref=e39]:
+      - link [ref=e40] [cursor=pointer]:
+        - /url: https://itch.io/
+      - link "itch.io" [ref=e43] [cursor=pointer]:
+        - /url: https://itch.io/
+      - generic [ref=e44]: ·
+      - link "View all by sirgavin211" [ref=e45] [cursor=pointer]:
+        - /url: https://sirgavin211.itch.io
+      - generic [ref=e46]: ·
+      - link "Report" [ref=e47] [cursor=pointer]:
+        - /url: javascript:void(0);
+      - generic [ref=e48]: ·
+      - link "Embed" [ref=e49] [cursor=pointer]:
+        - /url: javascript:void(0);
+      - generic [ref=e50]: ·
+      - generic [ref=e51]: Updated 7 minutes ago
+      - generic [ref=e52]:
+        - link "Games" [ref=e53] [cursor=pointer]:
+          - /url: https://itch.io/games
+        - text: ›
+        - link "Survival" [ref=e54] [cursor=pointer]:
+          - /url: https://itch.io/games/tag-survival
+        - text: ›
+        - link "Free" [ref=e55] [cursor=pointer]:
+          - /url: https://itch.io/games/free

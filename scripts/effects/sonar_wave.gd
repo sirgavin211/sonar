@@ -29,6 +29,9 @@ var echoed := {}  # nodes this wave already reached
 var hostile := false  # true for the boss's waves
 var victim: Player  # who a hostile wave hurts
 var hit_victim := false
+var bounds := Rect2()  # box around every ray, so far-off things are skipped with one check
+var query := PhysicsRayQueryParameters2D.new()  # reused by every ray cast, not rebuilt each time
+var sizes := {}  # node -> collision size, looked up once per wave instead of every tick
 
 
 func setup(player: Player, origin: Vector2, aim: Vector2) -> void:
@@ -59,6 +62,8 @@ func make_rays() -> void:
 	for i in ray_count:
 		var angle := direction - arc / 2 + arc * i / (ray_count - 1)
 		rays.append({"pos": position, "dir": Vector2.from_angle(angle), "bounces": 0})
+	query.collision_mask = 1
+	update_bounds()
 
 
 func _physics_process(delta: float) -> void:
@@ -67,8 +72,10 @@ func _physics_process(delta: float) -> void:
 	if traveled > max_range:
 		queue_free()
 		return
+	var space := get_world_2d().direct_space_state
 	for ray in rays:
-		move_ray(ray, step)
+		move_ray(ray, step, space)
+	update_bounds()
 	if hostile:
 		hurt_victim(step)
 		clash_with_player_waves()
@@ -78,10 +85,11 @@ func _physics_process(delta: float) -> void:
 
 
 # Walls and the Sun Core (layer 1) reflect the ray and echo.
-func move_ray(ray: Dictionary, step: float) -> void:
+func move_ray(ray: Dictionary, step: float, space: PhysicsDirectSpaceState2D) -> void:
 	var target: Vector2 = ray.pos + ray.dir * step
-	var query := PhysicsRayQueryParameters2D.create(ray.pos, target, 1)
-	var hit := get_world_2d().direct_space_state.intersect_ray(query)
+	query.from = ray.pos
+	query.to = target
+	var hit := space.intersect_ray(query)
 	if hit.is_empty():
 		ray.pos = target
 		return
@@ -97,8 +105,7 @@ func move_ray(ray: Dictionary, step: float) -> void:
 func hurt_victim(step: float) -> void:
 	if hit_victim or victim.is_dead:
 		return
-	var catch := victim.size.x / 2 + step
-	if rays.any(func(ray): return ray.pos.distance_to(victim.global_position) < catch):
+	if any_ray_near(victim.global_position, victim.size.x / 2 + step):
 		hit_victim = true
 		victim.take_damage(damage)
 
@@ -113,10 +120,28 @@ func clash_with_player_waves() -> void:
 
 
 func touches(other: SonarWave) -> bool:
-	for a in rays:
-		for b in other.rays:
-			if a.pos.distance_to(b.pos) < clash_distance:
-				return true
+	if not bounds.grow(clash_distance).intersects(other.bounds):
+		return false
+	for ray in rays:
+		if other.any_ray_near(ray.pos, clash_distance):
+			return true
+	return false
+
+
+func update_bounds() -> void:
+	bounds = Rect2(rays[0].pos, Vector2.ZERO)
+	for ray in rays:
+		bounds = bounds.expand(ray.pos)
+
+
+# Box check first: almost everything on the map is nowhere near this wave.
+func any_ray_near(point: Vector2, radius: float) -> bool:
+	if not bounds.grow(radius).has_point(point):
+		return false
+	var radius_squared := radius * radius
+	for ray in rays:
+		if ray.pos.distance_squared_to(point) < radius_squared:
+			return true
 	return false
 
 
@@ -125,8 +150,7 @@ func echo_reached(step: float) -> void:
 	for node in get_tree().get_nodes_in_group("echoable"):
 		if echoed.has(node) or node is StaticBody2D:
 			continue
-		var catch := object_size(node) / 2 + step
-		if rays.any(func(ray): return ray.pos.distance_to(node.global_position) < catch):
+		if any_ray_near(node.global_position, object_size(node) / 2 + step):
 			reach(node)
 
 
@@ -152,11 +176,11 @@ func send_echo(node: Node2D) -> void:
 
 # Size of the node's collision shape, so it stays right when art replaces the shapes.
 func object_size(node: Node2D) -> float:
-	var collision: CollisionShape2D = node.get_node_or_null("CollisionShape2D")
-	if collision == null:
-		return 20.0
-	var rect := collision.shape.get_rect()
-	return maxf(rect.size.x, rect.size.y)
+	if not sizes.has(node):
+		var collision: CollisionShape2D = node.get_node_or_null("CollisionShape2D")
+		var rect := collision.shape.get_rect() if collision else Rect2(0, 0, 20, 20)
+		sizes[node] = maxf(rect.size.x, rect.size.y)
+	return sizes[node]
 
 
 func _draw() -> void:

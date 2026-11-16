@@ -101,7 +101,9 @@ func _process(_delta: float) -> void:
 	held_name.text = Pickup.NAMES.get(player.held_kind(), "")
 	fill_grid(hotbar, player.backpack)
 	for i in hotbar.get_child_count():
-		hotbar.get_child(i).theme_type_variation = &"HotbarSelected" if i == player.selected else &""
+		var variation := &"HotbarSelected" if i == player.selected else &""
+		if hotbar.get_child(i).theme_type_variation != variation:
+			hotbar.get_child(i).theme_type_variation = variation
 	if inventory_panel.visible:
 		fill_grid(backpack_grid, player.backpack)
 
@@ -119,6 +121,11 @@ func fill_grid(grid: Container, inventory: Inventory) -> void:
 	for i in grid.get_child_count():
 		var slot: Button = grid.get_child(i)
 		var item = inventory.slots[i]
+		# Theme overrides relayout the slot, so only touch slots whose item changed.
+		var shown: Array = [item.kind, item.count] if item else []
+		if slot.get_meta("shown", []) == shown:
+			continue
+		slot.set_meta("shown", shown)
 		slot.icon = Pickup.icon_for(item.kind) if item else null
 		if slot.icon:
 			var scale: float = Pickup.HUD_ICON_SCALE.get(item.kind, 1.0)
